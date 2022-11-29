@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "bin",
+    "types",
+    "zkevm",
+]
+
+[profile.test]
+opt-level = 3
+debug-assertions = true
+
+[profile.release]
+opt-level = 3
+debug-assertions = true

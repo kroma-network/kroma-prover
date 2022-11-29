@@ -1,0 +1,51 @@
+[package]
+name = "zkevm"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+halo2-snark-aggregator-circuit = { git = "https://github.com/light-scale/halo2-snark-aggregator", branch = "ls-dev-0920-tpl" }
+halo2-snark-aggregator-solidity = { git = "https://github.com/light-scale/halo2-snark-aggregator", branch = "ls-dev-0920-tpl" }
+halo2-snark-aggregator-api = { git = "https://github.com/light-scale/halo2-snark-aggregator", branch = "ls-dev-0920-tpl" }
+#halo2-snark-aggregator-circuit = { path = "../../halo2-snark-aggregator/halo2-snark-aggregator-circuit" }
+#halo2-snark-aggregator-solidity = { path = "../../halo2-snark-aggregator/halo2-snark-aggregator-solidity" }
+#halo2-snark-aggregator-api = { path = "../../halo2-snark-aggregator/halo2-snark-aggregator-api" }
+sha2 ="0.10.2"
+
+halo2_proofs = { git = "https://github.com/light-scale/halo2.git", branch = "ls-dev-0902" }
+bus-mapping = { git = "https://github.com/light-scale/zkevm-circuits.git", branch = "ls-dev-0920" }
+eth-types = { git = "https://github.com/light-scale/zkevm-circuits.git", branch = "ls-dev-0920" }
+zkevm-circuits = { git = "https://github.com/light-scale/zkevm-circuits.git", branch = "ls-dev-0920", features = ["test"] }
+mpt-circuits = { package = "halo2-mpt-circuits", git = "https://github.com/light-scale/mpt-circuit.git", branch = "ls-dev-0902" }
+rand = "0.8"
+rand_xorshift = "0.3"
+is-even = "1.0.0"
+ethers-core = "0.17.0"
+hex = "0.4.3"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0.66"
+types = { path = "../types", features = ["test"] }
+log = "0.4"
+anyhow = "1.0"
+num-bigint = "0.4.3"
+blake2 = "0.10.3"
+dotenv = "0.15.0"
+env_logger = "0.9.0"
+strum = "0.24"
+strum_macros = "0.24"
+once_cell = "1.8.0"
+chrono = "0.4.19"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+procfs = "0.13.0"
+
+[features]
+default = []
+prove_verify = []
+
+[dev-dependencies]
+git-version = "0.3.5"
+glob = "0.3.0"
