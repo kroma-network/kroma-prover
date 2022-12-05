@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
+    io::write_file,
     prover::Prover,
     utils::{get_block_trace_from_file, load_or_create_params, load_or_create_seed},
 };
@@ -72,6 +73,8 @@ fn main() {
 
     let outer_now = Instant::now();
     for (trace_name, trace) in traces {
+        let mut out_dir = PathBuf::from(&trace_name);
+        prover.debug_dir = String::from(out_dir.to_str().unwrap());
         if args.evm_proof.is_some() {
             let proof_path = PathBuf::from(&trace_name).join("evm.proof");
 
@@ -127,6 +130,14 @@ fn main() {
                 fs::create_dir_all(&proof_path).unwrap();
                 agg_proof.write_to_dir(&mut proof_path);
             }
+
+            let sol = prover.create_solidity_verifier(&agg_proof);
+            write_file(
+                &mut out_dir,
+                "verifier.sol",
+                &Vec::<u8>::from(sol.as_bytes()),
+            );
+            log::info!("output files to {}", out_dir.to_str().unwrap());
         }
     }
     info!("finish generating all, elapsed: {:?}", outer_now.elapsed());
