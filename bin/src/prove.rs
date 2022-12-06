@@ -1,19 +1,28 @@
+use anyhow::Result;
 use clap::Parser;
+use futures::future::join_all;
 use log::info;
 use rand::SeedableRng;
 use rand_xorshift::XorShiftRng;
 use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::time::Instant;
+use storage::s3::S3;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
     io::write_file,
     prover::Prover,
     utils::{get_block_result_from_file, load_or_create_params, load_or_create_seed},
 };
+
+const ENV_CRED_KEY_ID: &str = "";
+const ENV_CRED_KEY_SECRET: &str = "";
+const BUCKET_NAME: &str = "voost-proof";
+const REGION: &str = "ap-northeast-2";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -41,7 +50,8 @@ struct Args {
     agg_proof: Option<bool>,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
 
@@ -72,11 +82,25 @@ fn main() {
     }
 
     let outer_now = Instant::now();
-    for (trace_name, trace) in traces {
-        let mut out_dir = PathBuf::from(&trace_name);
+    let mut dir_name = String::from("");
+
+    let s3 = S3::new(
+        ENV_CRED_KEY_ID.to_string(),
+        ENV_CRED_KEY_SECRET.to_string(),
+        REGION.to_string(),
+    );
+    for (_trace_name, trace) in traces {
+        let block_number = trace.block_trace.number.to_string();
+        let block_hash = format!("{:#x}", trace.block_trace.hash);
+        dir_name = format!("{}_{}", block_number, block_hash);
+
+        let mut out_dir = PathBuf::from(&dir_name);
         prover.debug_dir = String::from(out_dir.to_str().unwrap());
+
+        fs::create_dir_all(&dir_name)?;
+
         if args.evm_proof.is_some() {
-            let proof_path = PathBuf::from(&trace_name).join("evm.proof");
+            let proof_path = PathBuf::from(&dir_name).join("evm.proof");
 
             let now = Instant::now();
             let evm_proof = prover
@@ -95,7 +119,7 @@ fn main() {
         }
 
         if args.state_proof.is_some() {
-            let proof_path = PathBuf::from(&trace_name).join("state.proof");
+            let proof_path = PathBuf::from(&dir_name).join("state.proof");
 
             let now = Instant::now();
             let state_proof = prover
@@ -114,7 +138,7 @@ fn main() {
         }
 
         if args.agg_proof.is_some() {
-            let mut proof_path = PathBuf::from(&trace_name).join("agg.proof");
+            let mut proof_path = PathBuf::from(&dir_name).join("agg.proof");
 
             let now = Instant::now();
             let agg_proof = prover
@@ -141,4 +165,25 @@ fn main() {
         }
     }
     info!("finish generating all, elapsed: {:?}", outer_now.elapsed());
+
+    let current_dir = env::current_dir().unwrap();
+    let futures = [
+        "verify_circuit_proof.data",
+        "verify_circuit_final_pair.data",
+    ]
+    .iter()
+    .map(|&path| {
+        let local_path = current_dir.join(format!("{}/agg.proof/{}", &dir_name, path));
+        let remote_path = format!("{}/{}", &dir_name, path);
+        return s3.upload(local_path, BUCKET_NAME.to_string(), remote_path);
+    })
+    .collect::<Vec<_>>();
+    let results = join_all(futures).await;
+    results.iter().for_each(|result| {
+        result.as_ref().unwrap();
+    });
+
+    info!("finish uploading all");
+
+    Ok(())
 }

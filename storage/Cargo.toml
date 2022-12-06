@@ -1,0 +1,15 @@
+[package]
+name = "storage"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+redis = "0.22.1"
+postgres = "0.19.4"
+aws-config = "0.6"
+aws-sdk-s3 = "0.6"
+anyhow = "1.0"
+log = "0.4"
+mime_guess = "2"
