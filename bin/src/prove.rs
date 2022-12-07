@@ -1,10 +1,16 @@
 use anyhow::Result;
 use clap::Parser;
 use futures::future::join_all;
-use log::info;
+use jsonrpsee::{
+    core::client::ClientT,
+    http_client::{HttpClient, HttpClientBuilder},
+    rpc_params,
+};
+use jsonrpsee_core::Error;
+use log::{debug, info};
 use rand::SeedableRng;
 use rand_xorshift::XorShiftRng;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 use std::fs::File;
@@ -12,6 +18,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::time::Instant;
 use storage::s3::S3;
+use types::eth::BlockResult;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
     io::write_file,
@@ -23,6 +30,7 @@ const ENV_CRED_KEY_ID: &str = "";
 const ENV_CRED_KEY_SECRET: &str = "";
 const BUCKET_NAME: &str = "voost-proof";
 const REGION: &str = "ap-northeast-2";
+const RPC_URL: &str = "http://localhost:8545";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -48,6 +56,10 @@ struct Args {
     /// Boolean means if output agg proof.
     #[clap(long = "agg")]
     agg_proof: Option<bool>,
+
+    /// Indicate how to get block trace result (if false, read from chain)
+    #[clap(long = "trace_from_file")]
+    trace_from_file: Option<bool>,
 }
 
 #[tokio::main]
@@ -66,30 +78,23 @@ async fn main() -> Result<()> {
 
     let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
 
-    let mut traces = HashMap::new();
-    let trace_path = PathBuf::from(&args.trace_path.unwrap());
-    if trace_path.is_dir() {
-        for entry in fs::read_dir(trace_path).unwrap() {
-            let path = entry.unwrap().path();
-            if path.is_file() && path.to_str().unwrap().ends_with(".json") {
-                let block_result = get_block_result_from_file(path.to_str().unwrap());
-                traces.insert(path.file_stem().unwrap().to_os_string(), block_result);
-            }
-        }
-    } else {
-        let block_result = get_block_result_from_file(trace_path.to_str().unwrap());
-        traces.insert(trace_path.file_stem().unwrap().to_os_string(), block_result);
-    }
-
-    let outer_now = Instant::now();
-    let mut dir_name = String::from("");
-
     let s3 = S3::new(
         ENV_CRED_KEY_ID.to_string(),
         ENV_CRED_KEY_SECRET.to_string(),
         REGION.to_string(),
     );
-    for (_trace_name, trace) in traces {
+
+    let traces = make_traces(
+        args.trace_from_file.unwrap(),
+        &args.trace_path.unwrap(),
+        &s3,
+    )
+    .await?;
+
+    let outer_now = Instant::now();
+    let mut dir_name = String::from("");
+
+    for trace in traces.iter() {
         let block_number = trace.block_trace.number.to_string();
         let block_hash = format!("{:#x}", trace.block_trace.hash);
         dir_name = format!("{}_{}", block_number, block_hash);
@@ -186,4 +191,97 @@ async fn main() -> Result<()> {
     info!("finish uploading all");
 
     Ok(())
+}
+
+async fn find_proven_blocks(s3: &S3) -> Result<BTreeMap<u32, String>> {
+    let keys = s3.list_keys(BUCKET_NAME.to_string()).await?;
+
+    // BTreeMap is sorted based on the key.
+    let mut proven_blocks: BTreeMap<u32, String> = BTreeMap::new(); // K : blockNumber, V: blockHash
+
+    for val in keys.iter() {
+        let (dir_key, _file_name) = val.rsplit_once('/').unwrap();
+        let (block_number_str, block_hash) = dir_key.rsplit_once('_').unwrap();
+        let block_number_u32 = block_number_str.parse::<u32>().unwrap();
+
+        // insert a key only if it doesn't already exist
+        proven_blocks
+            .entry(block_number_u32)
+            .or_insert(block_hash.to_string());
+    }
+
+    for (block_number, block_hash) in &proven_blocks {
+        debug!("{block_number}: {block_hash}");
+    }
+
+    Ok(proven_blocks)
+}
+
+async fn target_proving_block_num(proven_blocks: &BTreeMap<u32, String>) -> u32 {
+    if proven_blocks.is_empty() {
+        return 1;
+    }
+    let (last_proven_block_num, _block_hash) = proven_blocks.iter().next_back().unwrap();
+    return last_proven_block_num + 1;
+}
+
+async fn get_block_trace(rpc_client: &HttpClient, block_number: &u32) -> Result<BlockResult> {
+    let block_number_hex_str = format!("0x{:x}", block_number);
+    let params = rpc_params![block_number_hex_str];
+    let trace_result: Result<BlockResult, Error> = rpc_client
+        .request("voost_getBlockResultByNumberOrHash", params)
+        .await;
+    Ok(trace_result.unwrap())
+}
+
+async fn make_trace_from_chain(s3: &S3) -> Result<Vec<BlockResult>> {
+    let mut trace_vec = Vec::new();
+
+    // get number of the block whose proof has to be created. (assume we are creating proof for a SINGLE block only)
+    let proven_blocks = find_proven_blocks(&s3).await?;
+
+    for val in proven_blocks.iter() {
+        debug!("{}  {}", val.0, val.1)
+    }
+
+    // get the block trace of the target block
+    let target_block_number = target_proving_block_num(&proven_blocks).await;
+    let rpc_client = HttpClientBuilder::default().build(RPC_URL)?;
+    let block_trace_result = get_block_trace(&rpc_client, &target_block_number).await?;
+
+    trace_vec.push(block_trace_result);
+    Ok(trace_vec)
+}
+
+async fn make_trace_from_file(trace_path: &str) -> Result<Vec<BlockResult>> {
+    let mut trace_vec = Vec::new();
+    let trace_path = PathBuf::from(trace_path);
+
+    if trace_path.is_dir() {
+        for entry in fs::read_dir(trace_path).unwrap() {
+            let path = entry.unwrap().path();
+            if path.is_file() && path.ends_with(".json") {
+                let block_result = get_block_result_from_file(path);
+                trace_vec.push(block_result);
+            }
+        }
+    } else {
+        let block_result = get_block_result_from_file(trace_path);
+        trace_vec.push(block_result);
+    }
+    Ok(trace_vec)
+}
+
+async fn make_traces(
+    trace_from_file: bool,
+    params_path: &str,
+    s3: &S3,
+) -> Result<Vec<BlockResult>> {
+    if trace_from_file {
+        info!("generating trace from file");
+        Ok(make_trace_from_file(params_path).await?)
+    } else {
+        info!("generating trace from chain");
+        Ok(make_trace_from_chain(s3).await?)
+    }
 }

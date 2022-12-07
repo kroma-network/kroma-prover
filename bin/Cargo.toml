@@ -24,6 +24,10 @@ aws-sdk-s3 = "0.6"
 anyhow = "1.0"
 futures = "0.3"
 storage = { path = "../storage" }
+jsonrpsee = { version = "0.16.2", features = ["full"] }
+tracing-subscriber = { version = "0.3.3", features = ["env-filter"] }
+types = { path = "../types", features = ["test"] }
+jsonrpsee-core = "0.16.2"
 
 [[bin]]
 name = "prove"
