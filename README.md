@@ -1,8 +1,6 @@
-# 📜 scroll-zkevm 📜
-[![Unit Test](https://github.com/scroll-tech/scroll-zkevm/actions/workflows/unit_test.yml/badge.svg)](https://github.com/scroll-tech/scroll-zkevm/actions/workflows/unit_test.yml)
-![issues](https://img.shields.io/github/issues/scroll-tech/scroll-zkevm)
+# Kroma Prover
 
-Scroll common rust crates.
+Kroma common rust crates.
 
 ## Usage
 
