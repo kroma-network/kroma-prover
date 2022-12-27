@@ -28,6 +28,7 @@ jsonrpsee = { version = "0.16.2", features = ["full"] }
 tracing-subscriber = { version = "0.3.3", features = ["env-filter"] }
 types = { path = "../types", features = ["test"] }
 jsonrpsee-core = "0.16.2"
+utils = { path = "../utils" }
 
 [[bin]]
 name = "prove"

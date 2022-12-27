@@ -19,6 +19,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 use storage::s3::S3;
 use types::eth::BlockResult;
+use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
     io::write_file,
@@ -67,6 +68,9 @@ async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
 
+    let mut timer = Measurer::new();
+
+    timer.start();
     let args = Args::parse();
     let params = load_or_create_params(&args.params_path.clone().unwrap(), *DEGREE)
         .expect("failed to load or create params");
@@ -77,6 +81,7 @@ async fn main() -> Result<()> {
     let rng = XorShiftRng::from_seed(seed);
 
     let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
+    timer.end("finish loading params");
 
     let s3 = S3::new(
         ENV_CRED_KEY_ID.to_string(),
@@ -91,10 +96,11 @@ async fn main() -> Result<()> {
     )
     .await?;
 
-    let outer_now = Instant::now();
     let mut dir_name = String::from("");
 
     for trace in traces.iter() {
+        timer.start();
+
         let block_number = trace.block_trace.number.to_string();
         let block_hash = format!("{:#x}", trace.block_trace.hash);
         dir_name = format!("{}_{}", block_number, block_hash);
@@ -107,15 +113,9 @@ async fn main() -> Result<()> {
         if args.evm_proof.is_some() {
             let proof_path = PathBuf::from(&dir_name).join("evm.proof");
 
-            let now = Instant::now();
             let evm_proof = prover
                 .create_target_circuit_proof::<EvmCircuit>(&trace)
                 .expect("cannot generate evm_proof");
-            info!(
-                "finish generating evm proof of {}, elapsed: {:?}",
-                &trace.block_trace.hash,
-                now.elapsed()
-            );
 
             if args.evm_proof.unwrap() {
                 let mut f = File::create(&proof_path).unwrap();
@@ -126,15 +126,9 @@ async fn main() -> Result<()> {
         if args.state_proof.is_some() {
             let proof_path = PathBuf::from(&dir_name).join("state.proof");
 
-            let now = Instant::now();
             let state_proof = prover
                 .create_target_circuit_proof::<StateCircuit>(&trace)
                 .expect("cannot generate state_proof");
-            info!(
-                "finish generating state proof of {}, elapsed: {:?}",
-                &trace.block_trace.hash,
-                now.elapsed()
-            );
 
             if args.state_proof.unwrap() {
                 let mut f = File::create(&proof_path).unwrap();
@@ -145,15 +139,9 @@ async fn main() -> Result<()> {
         if args.agg_proof.is_some() {
             let mut proof_path = PathBuf::from(&dir_name).join("agg.proof");
 
-            let now = Instant::now();
             let agg_proof = prover
                 .create_agg_circuit_proof(&trace)
                 .expect("cannot generate agg_proof");
-            info!(
-                "finish generating agg proof of {}, elapsed: {:?}",
-                &trace.block_trace.hash,
-                now.elapsed()
-            );
 
             if args.agg_proof.unwrap() {
                 fs::create_dir_all(&proof_path).unwrap();
@@ -168,8 +156,9 @@ async fn main() -> Result<()> {
             );
             log::info!("output files to {}", out_dir.to_str().unwrap());
         }
+
+        timer.end("finish generating a proof");
     }
-    info!("finish generating all, elapsed: {:?}", outer_now.elapsed());
 
     let current_dir = env::current_dir().unwrap();
     let futures = [
