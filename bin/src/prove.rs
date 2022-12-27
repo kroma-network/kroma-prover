@@ -10,13 +10,13 @@ use jsonrpsee_core::Error;
 use log::{debug, info};
 use rand::SeedableRng;
 use rand_xorshift::XorShiftRng;
-use std::collections::BTreeMap;
-use std::env;
-use std::fs;
-use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
-use std::time::Instant;
+use std::{
+    collections::BTreeMap,
+    env,
+    fs::{create_dir_all, read_dir, File},
+    io::Write,
+    path::PathBuf,
+};
 use storage::s3::S3;
 use types::eth::BlockResult;
 use utils::Measurer;
@@ -108,7 +108,7 @@ async fn main() -> Result<()> {
         let mut out_dir = PathBuf::from(&dir_name);
         prover.debug_dir = String::from(out_dir.to_str().unwrap());
 
-        fs::create_dir_all(&dir_name)?;
+        create_dir_all(&dir_name)?;
 
         if args.evm_proof.is_some() {
             let proof_path = PathBuf::from(&dir_name).join("evm.proof");
@@ -144,7 +144,7 @@ async fn main() -> Result<()> {
                 .expect("cannot generate agg_proof");
 
             if args.agg_proof.unwrap() {
-                fs::create_dir_all(&proof_path).unwrap();
+                create_dir_all(&proof_path).unwrap();
                 agg_proof.write_to_dir(&mut proof_path);
             }
 
@@ -247,7 +247,7 @@ async fn make_trace_from_file(trace_path: &str) -> Result<Vec<BlockResult>> {
     let trace_path = PathBuf::from(trace_path);
 
     if trace_path.is_dir() {
-        for entry in fs::read_dir(trace_path).unwrap() {
+        for entry in read_dir(trace_path).unwrap() {
             let path = entry.unwrap().path();
             if path.is_file() && path.ends_with(".json") {
                 let block_result = get_block_result_from_file(path);
