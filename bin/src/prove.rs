@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::time::Instant;
+use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
     io::write_file,
@@ -45,6 +46,9 @@ fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
+    let mut timer = Measurer::new();
+
+    timer.start();
     let args = Args::parse();
     let params = load_or_create_params(&args.params_path.clone().unwrap(), *DEGREE)
         .expect("failed to load or create params");
@@ -55,6 +59,7 @@ fn main() {
     let rng = XorShiftRng::from_seed(seed);
 
     let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
+    timer.end("finish loading params");
 
     let mut traces = HashMap::new();
     let trace_path = PathBuf::from(&args.trace_path.unwrap());
@@ -74,19 +79,14 @@ fn main() {
     let outer_now = Instant::now();
     for (trace_name, trace) in traces {
         let mut out_dir = PathBuf::from(&trace_name);
+        timer.start();
         prover.debug_dir = String::from(out_dir.to_str().unwrap());
         if args.evm_proof.is_some() {
             let proof_path = PathBuf::from(&trace_name).join("evm.proof");
 
-            let now = Instant::now();
             let evm_proof = prover
                 .create_target_circuit_proof::<EvmCircuit>(&trace)
                 .expect("cannot generate evm_proof");
-            info!(
-                "finish generating evm proof of {}, elapsed: {:?}",
-                &trace.header.hash.unwrap(),
-                now.elapsed()
-            );
 
             if args.evm_proof.unwrap() {
                 let mut f = File::create(&proof_path).unwrap();
@@ -97,15 +97,9 @@ fn main() {
         if args.state_proof.is_some() {
             let proof_path = PathBuf::from(&trace_name).join("state.proof");
 
-            let now = Instant::now();
             let state_proof = prover
                 .create_target_circuit_proof::<StateCircuit>(&trace)
                 .expect("cannot generate state_proof");
-            info!(
-                "finish generating state proof of {}, elapsed: {:?}",
-                &trace.header.hash.unwrap(),
-                now.elapsed()
-            );
 
             if args.state_proof.unwrap() {
                 let mut f = File::create(&proof_path).unwrap();
@@ -116,15 +110,9 @@ fn main() {
         if args.agg_proof.is_some() {
             let mut proof_path = PathBuf::from(&trace_name).join("agg.proof");
 
-            let now = Instant::now();
             let agg_proof = prover
                 .create_agg_circuit_proof(&trace)
                 .expect("cannot generate agg_proof");
-            info!(
-                "finish generating agg proof of {}, elapsed: {:?}",
-                &trace.header.hash.unwrap(),
-                now.elapsed()
-            );
 
             if args.agg_proof.unwrap() {
                 fs::create_dir_all(&proof_path).unwrap();
@@ -139,6 +127,8 @@ fn main() {
             );
             log::info!("output files to {}", out_dir.to_str().unwrap());
         }
+
+        timer.end("finish generating a proof");
     }
     info!("finish generating all, elapsed: {:?}", outer_now.elapsed());
 }
