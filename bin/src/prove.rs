@@ -255,7 +255,7 @@ async fn make_trace_from_file(trace_path: &str) -> Result<Vec<BlockResult>> {
     if trace_path.is_dir() {
         for entry in read_dir(trace_path).unwrap() {
             let path = entry.unwrap().path();
-            if path.is_file() && path.ends_with(".json") {
+            if path.is_file() && path.to_str().unwrap().ends_with(".json") {
                 let block_result = get_block_result_from_file(path);
                 trace_vec.push(block_result);
             }
