@@ -201,17 +201,18 @@ pub fn block_traces_to_witness_block(
     for (idx, block_trace) in block_traces.iter().enumerate() {
         let is_last = idx == block_traces.len() - 1;
         let mut eth_block: EthBlock = block_trace.clone().into();
-        eth_block.transactions.iter_mut().for_each(|transaction|{
-            if let Some(transaction_type) = transaction.transaction_type && transaction_type.as_u64() == DEPOSIT_TX_TYPE {
+        eth_block.transactions.iter_mut().for_each(|transaction| {
+            if let Some(transaction_type) = transaction.transaction_type {
                 // NOTE(chokobole): The nonce of Kanvas deposit tx is set to 0 by default.
                 // This causes an error at assert statement in zkevm-circuits.
                 // See gen_begin_tx_ops in bus-mappings/src/evm/opcodes.rs in zkevm-circuits for details.
                 // So here we explicitly set the known nonce from state db to the transaction.
                 // We have an alternative to make go-ethereum or kanvas-node to set nonce explicitly.
                 // But I think this is the fastest way to satisfy requirements.
-                transaction.nonce = U256::from(builder.sdb.get_nonce(&transaction.from));
+                if transaction_type.as_u64() == DEPOSIT_TX_TYPE {
+                    transaction.nonce = U256::from(builder.sdb.get_nonce(&transaction.from))
+                };
             }
-
         });
 
         let mut geth_trace = Vec::new();

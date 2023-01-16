@@ -70,6 +70,9 @@ pub struct TransactionTrace {
     pub v: U64,
     pub r: U256,
     pub s: U256,
+
+    // Kanvas deposit tx
+    pub mint: Option<U256>,
 }
 
 impl TransactionTrace {
@@ -79,7 +82,7 @@ impl TransactionTrace {
         block_number: Option<U64>,
         transaction_index: Option<U64>,
     ) -> Transaction {
-        Transaction {
+        let mut tx = Transaction {
             hash: self.tx_hash,
             nonce: U256::from(self.nonce),
             block_hash,
@@ -100,7 +103,12 @@ impl TransactionTrace {
             max_fee_per_gas: None,
             chain_id: Some(self.chain_id),
             other: Default::default(),
+        };
+        if let Some(mint) = self.mint {
+            let json_value = format!("{{\"mint\": \"{}\"}}", mint.to_string());
+            tx.other = serde_json::from_str(json_value.as_str()).unwrap();
         }
+        tx
     }
 }
 
