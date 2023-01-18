@@ -10,9 +10,10 @@ use halo2_proofs::halo2curves::bn256::Fr;
 use is_even::IsEven;
 
 use super::mpt;
+use eth_types::geth_types::DEPOSIT_TX_TYPE;
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
-use types::eth::{BlockResult, ExecStep};
+use types::eth::{BlockResult, EthBlock, ExecStep};
 use zkevm_circuits::evm_circuit::table::FixedTableTag;
 
 use halo2_proofs::arithmetic::FieldExt;
@@ -71,7 +72,19 @@ pub fn block_results_to_witness_block(
     let mut builder = CircuitInputBuilder::new(state_db, code_db, Default::default());
     for (idx, block_result) in block_results.iter().enumerate() {
         let is_last = idx == block_results.len() - 1;
-        let eth_block = block_result.block_trace.clone().into();
+        let mut eth_block: EthBlock = block_result.block_trace.clone().into();
+        eth_block.transactions.iter_mut().for_each(|transaction| {
+            if let Some(transaction_type) = transaction.transaction_type  && transaction_type.as_u64() == DEPOSIT_TX_TYPE {
+                // NOTE(chokobole): The nonce of Kanvas deposit tx is set to 0 by default.
+                // This causes an error at assert statement in zkevm-circuits.
+                // See gen_begin_tx_ops in bus-mappings/src/evm/opcodes.rs in zkevm-circuits for details.
+                // So here we explicitly set the known nonce from state db to the transaction.
+                // We have an alternative to make go-ethereum or kanvas-node to set nonce explicitly.
+                // But I think this is the fastest way to satisfy requirements.
+                transaction.nonce = U256::from(builder.sdb.get_nonce(&transaction.from));
+            }
+        });
+
         let mut geth_trace = Vec::new();
         for result in &block_result.execution_results {
             geth_trace.push(result.into());
