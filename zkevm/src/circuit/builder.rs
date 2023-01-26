@@ -61,7 +61,12 @@ pub fn block_result_to_witness_block(
 pub fn block_results_to_witness_block(
     block_results: &[BlockResult],
 ) -> Result<Block<Fr>, anyhow::Error> {
-    let chain_id = if let Some(tx_trace) = block_results[0].block_trace.transactions.get(0) {
+    let chain_id = if let Some(tx_trace) = block_results[0]
+        .block_trace
+        .transactions
+        .iter()
+        .find(|x| x.type_ as u64 != DEPOSIT_TX_TYPE)
+    {
         tx_trace.chain_id
     } else {
         0i16.into()
