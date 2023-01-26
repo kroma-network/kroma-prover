@@ -2,23 +2,21 @@ use super::{MAX_CALLDATA, MAX_EXP_STEPS, MAX_RWS, MAX_TXS};
 use crate::circuit::{
     TargetCircuit, AUTO_TRUNCATE, CHAIN_ID, DEGREE, MAX_INNER_BLOCKS, MAX_KECCAK_ROWS,
 };
+use anyhow::bail;
 use bus_mapping::circuit_input_builder::{self, BlockHead, CircuitInputBuilder, CircuitsParams};
 use bus_mapping::state_db::{Account, CodeDB, StateDB};
-use eth_types::evm_types::OpcodeId;
-use eth_types::ToAddress;
+use eth_types::{evm_types::OpcodeId, geth_types::DEPOSIT_TX_TYPE, ToAddress};
 use ethers_core::types::{Bytes, U256};
-use types::eth::{BlockTrace, EthBlock, ExecStep};
-
-use anyhow::bail;
-use eth_types::geth_types::DEPOSIT_TX_TYPE;
 use halo2_proofs::halo2curves::bn256::Fr;
 use is_even::IsEven;
 use itertools::Itertools;
 use mpt_zktrie::state::ZktrieState;
 use std::time::Instant;
-use zkevm_circuits::evm_circuit::witness::block_apply_mpt_state;
-use zkevm_circuits::evm_circuit::witness::{block_convert, Block};
-use zkevm_circuits::util::SubCircuit;
+use types::eth::{BlockTrace, EthBlock, ExecStep};
+use zkevm_circuits::{
+    evm_circuit::witness::{block_apply_mpt_state, block_convert, Block},
+    util::SubCircuit,
+};
 
 #[cfg(not(feature = "zktrie"))]
 pub const SUB_CIRCUIT_NAMES: [&str; 10] = [
@@ -166,7 +164,13 @@ pub fn block_traces_to_witness_block(
 
     let chain_ids = block_traces
         .iter()
-        .map(|block_trace| block_trace.chain_id)
+        .flat_map(|block_trace| {
+            block_trace
+                .transactions
+                .iter()
+                .find(|tx_trace| tx_trace.type_ as u64 != DEPOSIT_TX_TYPE)
+                .map(|tx_trace| tx_trace.chain_id)
+        })
         .collect::<Vec<U256>>();
 
     let chain_id = if !chain_ids.is_empty() {
@@ -210,8 +214,8 @@ pub fn block_traces_to_witness_block(
                 // We have an alternative to make go-ethereum or kanvas-node to set nonce explicitly.
                 // But I think this is the fastest way to satisfy requirements.
                 if transaction_type.as_u64() == DEPOSIT_TX_TYPE {
-                    transaction.nonce = U256::from(builder.sdb.get_nonce(&transaction.from))
-                };
+                    transaction.nonce = U256::from(builder.sdb.get_nonce(&transaction.from));
+                }
             }
         });
 
