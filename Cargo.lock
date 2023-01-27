@@ -696,7 +696,7 @@ checksum = "0d261e256854913907f67ed06efbc3338dfe6179796deefc1ff763fc1aee5535"
 [[package]]
 name = "bus-mapping"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#d3e87162ad36b13086656a8ae34a1d980c9a8c64"
+source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#4defe227dc581dafa569dee9848a53f4f83fe6b2"
 dependencies = [
  "eth-types",
  "ethers-core",
@@ -1291,9 +1291,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.8.0"
+version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797"
+checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
 
 [[package]]
 name = "elliptic-curve"
@@ -1383,7 +1383,7 @@ dependencies = [
 [[package]]
 name = "eth-types"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#d3e87162ad36b13086656a8ae34a1d980c9a8c64"
+source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#4defe227dc581dafa569dee9848a53f4f83fe6b2"
 dependencies = [
  "ethers-core",
  "ethers-signers",
@@ -1541,7 +1541,7 @@ checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 [[package]]
 name = "external-tracer"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#d3e87162ad36b13086656a8ae34a1d980c9a8c64"
+source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#4defe227dc581dafa569dee9848a53f4f83fe6b2"
 dependencies = [
  "eth-types",
  "geth-utils",
@@ -1775,7 +1775,7 @@ dependencies = [
 [[package]]
 name = "gadgets"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#d3e87162ad36b13086656a8ae34a1d980c9a8c64"
+source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#4defe227dc581dafa569dee9848a53f4f83fe6b2"
 dependencies = [
  "digest 0.7.6",
  "eth-types",
@@ -1815,7 +1815,7 @@ dependencies = [
 [[package]]
 name = "geth-utils"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#d3e87162ad36b13086656a8ae34a1d980c9a8c64"
+source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#4defe227dc581dafa569dee9848a53f4f83fe6b2"
 dependencies = [
  "gobuild",
 ]
@@ -2677,7 +2677,7 @@ dependencies = [
 [[package]]
 name = "keccak256"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#d3e87162ad36b13086656a8ae34a1d980c9a8c64"
+source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#4defe227dc581dafa569dee9848a53f4f83fe6b2"
 dependencies = [
  "eth-types",
  "halo2_proofs",
@@ -2874,7 +2874,7 @@ dependencies = [
 [[package]]
 name = "mock"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#d3e87162ad36b13086656a8ae34a1d980c9a8c64"
+source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#4defe227dc581dafa569dee9848a53f4f83fe6b2"
 dependencies = [
  "eth-types",
  "ethers-core",
@@ -3030,9 +3030,9 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.2.2"
+version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7ab01d0f889e957861bc65888d5ccbe82c158d0270136ba46820d43837cdf72"
+checksum = "c3840933452adf7b3b9145e27086a5a3376c619dca1a21b1e5a5af0d54979bed"
 dependencies = [
  "arrayvec",
  "bitvec 1.0.1",
@@ -5307,7 +5307,7 @@ dependencies = [
 [[package]]
 name = "zkevm-circuits"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#d3e87162ad36b13086656a8ae34a1d980c9a8c64"
+source = "git+https://github.com/light-scale/zkevm-circuits.git?branch=ls-dev-0920#4defe227dc581dafa569dee9848a53f4f83fe6b2"
 dependencies = [
  "array-init",
  "bus-mapping",
