@@ -83,11 +83,15 @@ async fn main() -> Result<()> {
     let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
     timer.end("finish loading params");
 
-    let s3 = S3::new(
-        ENV_CRED_KEY_ID.to_string(),
-        ENV_CRED_KEY_SECRET.to_string(),
-        REGION.to_string(),
-    );
+    let s3 = if ENV_CRED_KEY_ID.is_empty() {
+        None
+    } else {
+        Some(S3::new(
+            ENV_CRED_KEY_ID.to_string(),
+            ENV_CRED_KEY_SECRET.to_string(),
+            REGION.to_string(),
+        ))
+    };
 
     let traces = make_traces(
         args.trace_from_file.unwrap(),
@@ -96,14 +100,12 @@ async fn main() -> Result<()> {
     )
     .await?;
 
-    let mut dir_name = String::from("");
-
     for trace in traces.iter() {
         timer.start();
 
         let block_number = trace.block_trace.number.to_string();
         let block_hash = format!("{:#x}", trace.block_trace.hash);
-        dir_name = format!("{}_{}", block_number, block_hash);
+        let dir_name = format!("{}_{}", block_number, block_hash);
 
         let mut out_dir = PathBuf::from(&dir_name);
         prover.debug_dir = String::from(out_dir.to_str().unwrap());
@@ -155,29 +157,33 @@ async fn main() -> Result<()> {
                 &Vec::<u8>::from(sol.as_bytes()),
             );
             log::info!("output files to {}", out_dir.to_str().unwrap());
+
+            if let Some(s3) = s3.as_ref() {
+                let current_dir = env::current_dir().unwrap();
+                let futures = [
+                    "verify_circuit_proof.data",
+                    "verify_circuit_final_pair.data",
+                ]
+                .iter()
+                .map(|&path| {
+                    let local_path = current_dir.join(format!("{}/agg.proof/{}", &dir_name, path));
+                    let remote_path = format!("{}/{}", &dir_name, path);
+                    return s3.upload(local_path, BUCKET_NAME.to_string(), remote_path);
+                })
+                .collect::<Vec<_>>();
+                let results = join_all(futures).await;
+                results.iter().for_each(|result| {
+                    result.as_ref().unwrap();
+                });
+
+                info!("finish uploading all");
+            } else {
+                info!("not uploading to s3");
+            }
         }
 
         timer.end("finish generating a proof");
     }
-
-    let current_dir = env::current_dir().unwrap();
-    let futures = [
-        "verify_circuit_proof.data",
-        "verify_circuit_final_pair.data",
-    ]
-    .iter()
-    .map(|&path| {
-        let local_path = current_dir.join(format!("{}/agg.proof/{}", &dir_name, path));
-        let remote_path = format!("{}/{}", &dir_name, path);
-        return s3.upload(local_path, BUCKET_NAME.to_string(), remote_path);
-    })
-    .collect::<Vec<_>>();
-    let results = join_all(futures).await;
-    results.iter().for_each(|result| {
-        result.as_ref().unwrap();
-    });
-
-    info!("finish uploading all");
 
     Ok(())
 }
@@ -249,7 +255,7 @@ async fn make_trace_from_file(trace_path: &str) -> Result<Vec<BlockResult>> {
     if trace_path.is_dir() {
         for entry in read_dir(trace_path).unwrap() {
             let path = entry.unwrap().path();
-            if path.is_file() && path.ends_with(".json") {
+            if path.is_file() && path.to_str().unwrap().ends_with(".json") {
                 let block_result = get_block_result_from_file(path);
                 trace_vec.push(block_result);
             }
@@ -264,13 +270,13 @@ async fn make_trace_from_file(trace_path: &str) -> Result<Vec<BlockResult>> {
 async fn make_traces(
     trace_from_file: bool,
     params_path: &str,
-    s3: &S3,
+    s3: &Option<S3>,
 ) -> Result<Vec<BlockResult>> {
     if trace_from_file {
         info!("generating trace from file");
         Ok(make_trace_from_file(params_path).await?)
     } else {
         info!("generating trace from chain");
-        Ok(make_trace_from_chain(s3).await?)
+        Ok(make_trace_from_chain(s3.as_ref().unwrap()).await?)
     }
 }
