@@ -5,7 +5,7 @@ use jsonrpsee::{
     rpc_params,
 };
 use once_cell::sync::Lazy;
-use types::eth::BlockResult;
+use types::eth::BlockTrace;
 use zkevm::utils::read_env_var;
 
 pub static RPC_URL: Lazy<String> =
@@ -33,7 +33,7 @@ impl L2Client {
     pub async fn get_trace_by_block_number_hex(
         &self,
         block_number_hex: String,
-    ) -> Result<BlockResult> {
+    ) -> Result<BlockTrace> {
         let params = rpc_params![block_number_hex.clone()];
         let trace_result = self
             .http_client
