@@ -11,7 +11,7 @@ use std::{
     io::Write,
     path::PathBuf,
 };
-use types::eth::BlockResult;
+use types::eth::BlockTrace;
 use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
@@ -50,7 +50,7 @@ impl ProverLib {
         }
     }
 
-    pub async fn make_trace_from_chain(&mut self, block_number_hex: String) -> Result<BlockResult> {
+    pub async fn make_trace_from_chain(&mut self, block_number_hex: String) -> Result<BlockTrace> {
         self.timer.start();
         let block_trace_result = self
             .l2_client
@@ -67,7 +67,7 @@ impl ProverLib {
         Ok(())
     }
 
-    pub async fn create_proof(&mut self, trace: BlockResult) -> Result<ProofResult> {
+    pub async fn create_proof(&mut self, trace: BlockTrace) -> Result<ProofResult> {
         let mut proof_result = ProofResult::default();
         let args = self.args.take().unwrap();
 
@@ -81,16 +81,14 @@ impl ProverLib {
         // start creating proof
         self.timer.start();
         info!("start creating proof");
-        let block_number = trace.block_trace.number.to_string();
-        let block_hash = format!("{:#x}", trace.block_trace.hash);
-        let dir_name = format!("{}_{}", block_number, block_hash);
+        let block_number = trace.header.number.unwrap().to_string();
 
-        let mut out_dir = PathBuf::from(&dir_name);
+        let mut out_dir = PathBuf::from(&block_number);
         prover.debug_dir = String::from(out_dir.to_str().unwrap());
-        create_dir_all(&dir_name)?;
+        create_dir_all(&block_number)?;
 
         if args.evm_proof.is_some() {
-            let proof_path = PathBuf::from(&dir_name).join("evm.proof");
+            let proof_path = PathBuf::from(&block_number).join("evm.proof");
 
             let evm_proof = prover
                 .create_target_circuit_proof::<EvmCircuit>(&trace)
@@ -103,7 +101,7 @@ impl ProverLib {
         }
 
         if args.state_proof.is_some() {
-            let proof_path = PathBuf::from(&dir_name).join("state.proof");
+            let proof_path = PathBuf::from(&block_number).join("state.proof");
 
             let state_proof = prover
                 .create_target_circuit_proof::<StateCircuit>(&trace)
@@ -116,7 +114,7 @@ impl ProverLib {
         }
 
         if args.agg_proof.is_some() {
-            let mut proof_path = PathBuf::from(&dir_name).join("agg.proof");
+            let mut proof_path = PathBuf::from(&block_number).join("agg.proof");
 
             let agg_proof = prover
                 .create_agg_circuit_proof(&trace)

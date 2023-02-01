@@ -31,6 +31,7 @@ tracing-subscriber = { version = "0.3.3", features = ["env-filter"] }
 types = { path = "../types", features = ["test"] }
 jsonrpsee-core = "0.16.2"
 utils = { path = "../utils" }
+grpc = { path = "../grpc" }
 
 [[bin]]
 name = "setup"
@@ -47,3 +48,7 @@ path = "src/verify.rs"
 [[bin]]
 name = "mock_testnet"
 path = "src/mock_testnet.rs"
+
+[[bin]]
+name = "prover-grpc"
+path = "src/prover-grpc.rs"
