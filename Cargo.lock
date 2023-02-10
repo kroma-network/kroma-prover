@@ -570,6 +570,8 @@ dependencies = [
  "env_logger",
  "futures",
  "grpc",
+ "halo2-snark-aggregator-circuit",
+ "halo2_proofs",
  "jsonrpsee",
  "jsonrpsee-core",
  "log",
@@ -3750,6 +3752,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.1.4",
+ "halo2-snark-aggregator-circuit",
  "halo2_proofs",
  "l2client",
  "log",

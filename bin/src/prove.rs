@@ -1,6 +1,11 @@
 use anyhow::Result;
 use clap::Parser;
 use futures::future::join_all;
+use halo2_proofs::{
+    halo2curves::bn256::{Bn256, G1Affine},
+    plonk::VerifyingKey,
+};
+use halo2_snark_aggregator_circuit::verify_circuit::Halo2VerifierCircuit;
 use jsonrpsee::{
     core::client::ClientT,
     http_client::{HttpClient, HttpClientBuilder},
@@ -14,15 +19,16 @@ use std::{
     collections::BTreeMap,
     env,
     fs::{create_dir_all, read_dir, File},
-    io::Write,
+    io::{Cursor, Write},
     path::PathBuf,
+    str::FromStr,
 };
 use storage::s3::S3;
 use types::eth::BlockResult;
 use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
-    io::write_file,
+    io::{load_verify_circuit_vk, write_file},
     prover::Prover,
     utils::{get_block_result_from_file, load_or_create_params, load_or_create_seed},
 };
@@ -42,6 +48,9 @@ struct Args {
     /// Get seed and write into file.
     #[clap(long = "seed")]
     seed_path: Option<String>,
+    /// Get verify circuit verifying key.
+    #[clap(long = "vkey")]
+    vkey_path: Option<String>,
     /// Get BlockTrace from file or dir.
     #[clap(short, long = "trace")]
     trace_path: Option<String>,
@@ -139,10 +148,26 @@ async fn main() -> Result<()> {
         }
 
         if args.agg_proof.is_some() {
+            let verify_circuit_vk;
+            if prover.agg_pk.is_none() && args.vkey_path.is_some() {
+                let mut path = PathBuf::from_str(args.vkey_path.as_ref().unwrap()).unwrap();
+                let vk = load_verify_circuit_vk(&mut path);
+
+                verify_circuit_vk = Some(
+                    VerifyingKey::<G1Affine>::read::<_, Halo2VerifierCircuit<'_, Bn256>, Bn256, _>(
+                        &mut Cursor::new(&vk),
+                        &prover.agg_params,
+                    )
+                    .unwrap(),
+                );
+            } else {
+                verify_circuit_vk = None;
+            }
+
             let mut proof_path = PathBuf::from(&dir_name).join("agg.proof");
 
             let agg_proof = prover
-                .create_agg_circuit_proof(&trace)
+                .create_agg_circuit_proof(&trace, verify_circuit_vk)
                 .expect("cannot generate agg_proof");
 
             if args.agg_proof.unwrap() {
