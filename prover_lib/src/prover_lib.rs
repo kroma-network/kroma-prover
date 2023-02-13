@@ -1,6 +1,7 @@
 use super::args::Args;
 use super::params_seed::ParamsSeed;
 use anyhow::Result;
+use clap::Parser;
 use halo2_proofs::{
     halo2curves::bn256::{Bn256, G1Affine},
     plonk::VerifyingKey,
@@ -38,7 +39,7 @@ pub struct ProofResult {
 
 pub struct ProverLib {
     timer: Measurer,
-    args: Option<Args>,
+    args: Args,
     params_seed: Option<ParamsSeed>,
     l2_client: L2Client,
     out_to_files: bool,
@@ -48,7 +49,7 @@ impl ProverLib {
     pub fn new() -> Self {
         let timer = Measurer::new();
         Self {
-            args: None,
+            args: Args::parse(),
             timer: timer,
             params_seed: None,
             l2_client: L2Client::default(),
@@ -75,7 +76,6 @@ impl ProverLib {
 
     pub async fn create_proof(&mut self, trace: BlockResult) -> Result<ProofResult> {
         let mut proof_result = ProofResult::default();
-        let args = self.args.take().unwrap();
 
         let param_seed = self.params_seed.take().unwrap();
         let params = param_seed.params;
@@ -95,36 +95,36 @@ impl ProverLib {
         prover.debug_dir = String::from(out_dir.to_str().unwrap());
         create_dir_all(&dir_name)?;
 
-        if args.evm_proof.is_some() {
+        if self.args.evm_proof.is_some() {
             let proof_path = PathBuf::from(&dir_name).join("evm.proof");
 
             let evm_proof = prover
                 .create_target_circuit_proof::<EvmCircuit>(&trace)
                 .expect("cannot generate evm_proof");
 
-            if args.evm_proof.unwrap() {
+            if self.args.evm_proof.unwrap() {
                 let mut f = File::create(&proof_path).unwrap();
                 f.write_all(evm_proof.proof.as_slice()).unwrap();
             }
         }
 
-        if args.state_proof.is_some() {
+        if self.args.state_proof.is_some() {
             let proof_path = PathBuf::from(&dir_name).join("state.proof");
 
             let state_proof = prover
                 .create_target_circuit_proof::<StateCircuit>(&trace)
                 .expect("cannot generate state_proof");
 
-            if args.state_proof.unwrap() {
+            if self.args.state_proof.unwrap() {
                 let mut f = File::create(&proof_path).unwrap();
                 f.write_all(state_proof.proof.as_slice()).unwrap();
             }
         }
 
-        if args.agg_proof.is_some() {
+        if self.args.agg_proof.is_some() {
             let verify_circuit_vk;
-            if prover.agg_pk.is_none() && args.vkey_path.is_some() {
-                let mut path = PathBuf::from_str(args.vkey_path.as_ref().unwrap()).unwrap();
+            if prover.agg_pk.is_none() && self.args.vkey_path.is_some() {
+                let mut path = PathBuf::from_str(self.args.vkey_path.as_ref().unwrap()).unwrap();
                 let vk = load_verify_circuit_vk(&mut path);
 
                 verify_circuit_vk = Some(
@@ -144,7 +144,7 @@ impl ProverLib {
                 .create_agg_circuit_proof(&trace, verify_circuit_vk)
                 .expect("cannot generate agg_proof");
 
-            if args.agg_proof.unwrap() {
+            if self.args.agg_proof.unwrap() {
                 self.maybe_create_dir_all(proof_path.to_str().unwrap())
                     .unwrap();
 
@@ -170,18 +170,20 @@ impl ProverLib {
         Ok(proof_result)
     }
 
-    pub fn load_params_and_seed(&mut self, args: Args) {
+    pub fn load_params_and_seed(&mut self) {
         self.timer.start();
         info!("start loading params and seed");
 
-        let params = load_or_create_params(&args.params_path.clone().unwrap(), *DEGREE)
+        let params_path = self.args.params_path.as_ref().unwrap();
+        let see_path = self.args.seed_path.as_ref().unwrap();
+
+        let params = load_or_create_params(params_path.as_str(), *DEGREE)
             .expect("failed to load or create params");
 
-        let agg_params = load_or_create_params(&args.params_path.unwrap(), *AGG_DEGREE)
+        let agg_params = load_or_create_params(params_path.as_str(), *AGG_DEGREE)
             .expect("failed to load or create params");
 
-        let seed =
-            load_or_create_seed(&args.seed_path.unwrap()).expect("failed to load or create seed");
+        let seed = load_or_create_seed(see_path.as_str()).expect("failed to load or create seed");
 
         let rng = XorShiftRng::from_seed(seed);
 

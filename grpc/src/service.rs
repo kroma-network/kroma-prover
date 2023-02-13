@@ -1,6 +1,4 @@
 use super::proof::{proof_server::Proof, ProofRequest, ProofResponse};
-use clap::Parser;
-use prover_lib::args::Args;
 use prover_lib::prover_lib::ProverLib;
 use tonic::{Request, Response, Status};
 
@@ -24,7 +22,7 @@ impl Proof for ProofService {
             .unwrap();
 
         // load params and seed
-        prover_lib.load_params_and_seed(Args::parse());
+        prover_lib.load_params_and_seed();
 
         // start creating proof
         let created_proof = prover_lib.create_proof(trace).await.unwrap();
