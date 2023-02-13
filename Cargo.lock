@@ -570,6 +570,8 @@ dependencies = [
  "env_logger",
  "futures",
  "grpc",
+ "halo2-snark-aggregator-circuit",
+ "halo2_proofs",
  "jsonrpsee",
  "jsonrpsee-core",
  "log",
@@ -2100,7 +2102,7 @@ dependencies = [
 [[package]]
 name = "halo2-ecc-circuit-lib"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/halo2-snark-aggregator?branch=ls-dev-0920-tpl#d6c0d44eece4e46911451167c1e3cf2b966432f8"
+source = "git+https://github.com/light-scale/halo2-snark-aggregator?branch=ls-dev-0920-tpl#91e2640bca857db76d79b006e33f9e220a1fc54b"
 dependencies = [
  "group",
  "halo2_proofs",
@@ -2129,7 +2131,7 @@ dependencies = [
 [[package]]
 name = "halo2-snark-aggregator-api"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/halo2-snark-aggregator?branch=ls-dev-0920-tpl#d6c0d44eece4e46911451167c1e3cf2b966432f8"
+source = "git+https://github.com/light-scale/halo2-snark-aggregator?branch=ls-dev-0920-tpl#91e2640bca857db76d79b006e33f9e220a1fc54b"
 dependencies = [
  "blake2b_simd",
  "chrono",
@@ -2148,7 +2150,7 @@ dependencies = [
 [[package]]
 name = "halo2-snark-aggregator-circuit"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/halo2-snark-aggregator?branch=ls-dev-0920-tpl#d6c0d44eece4e46911451167c1e3cf2b966432f8"
+source = "git+https://github.com/light-scale/halo2-snark-aggregator?branch=ls-dev-0920-tpl#91e2640bca857db76d79b006e33f9e220a1fc54b"
 dependencies = [
  "clap 3.2.23",
  "halo2-ecc-circuit-lib",
@@ -2167,7 +2169,7 @@ dependencies = [
 [[package]]
 name = "halo2-snark-aggregator-solidity"
 version = "0.1.0"
-source = "git+https://github.com/light-scale/halo2-snark-aggregator?branch=ls-dev-0920-tpl#d6c0d44eece4e46911451167c1e3cf2b966432f8"
+source = "git+https://github.com/light-scale/halo2-snark-aggregator?branch=ls-dev-0920-tpl#91e2640bca857db76d79b006e33f9e220a1fc54b"
 dependencies = [
  "halo2-ecc-circuit-lib",
  "halo2-snark-aggregator-api",
@@ -3750,6 +3752,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.1.4",
+ "halo2-snark-aggregator-circuit",
  "halo2_proofs",
  "l2client",
  "log",

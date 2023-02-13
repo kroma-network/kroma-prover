@@ -24,7 +24,7 @@ use halo2_snark_aggregator_circuit::verify_circuit::{
     final_pair_to_instances, Halo2CircuitInstance, Halo2CircuitInstances, Halo2VerifierCircuit,
     Halo2VerifierCircuits, SingleProofWitness,
 };
-use halo2_snark_aggregator_solidity::MultiCircuitSolidityGenerate;
+use halo2_snark_aggregator_solidity::{MultiCircuitSolidityGenerate, SolidityGenerate};
 use log::info;
 use once_cell::sync::Lazy;
 
@@ -226,7 +226,24 @@ impl Prover {
     }
 
     pub fn create_solidity_verifier(&self, proof: &AggCircuitProof) -> String {
+        // NOTE: If any changes are made to circuit aggregation, names should be reflected, too.
+        let names = [
+            EvmCircuit::name(),
+            StateCircuit::name(),
+            PoseidonCircuit::name(),
+            ZktrieCircuit::name(),
+        ];
         MultiCircuitSolidityGenerate {
+            target_circuits_params: from_0_to_n::<4>().map(|circuit_index| SolidityGenerate {
+                target_circuit_params: self.params.clone(),
+                target_circuit_vk: self
+                    .target_circuit_pks
+                    .get(&names[circuit_index])
+                    .unwrap()
+                    .get_vk()
+                    .clone(),
+                nproofs: 4,
+            }),
             verify_vk: self.agg_pk.as_ref().expect("pk should be inited").get_vk(),
             verify_params: &self.agg_params,
             verify_circuit_instance: load_instances(&proof.instance),
@@ -239,21 +256,24 @@ impl Prover {
     pub fn create_agg_circuit_proof(
         &mut self,
         block_result: &BlockResult,
+        verify_circuit_vk: Option<VerifyingKey<G1Affine>>,
     ) -> anyhow::Result<AggCircuitProof> {
-        self.create_agg_circuit_proof_multi(&[block_result.clone()])
+        self.create_agg_circuit_proof_multi(&[block_result.clone()], verify_circuit_vk)
     }
 
     pub fn create_agg_circuit_proof_multi(
         &mut self,
         block_results: &[BlockResult],
+        verify_circuit_vk: Option<VerifyingKey<G1Affine>>,
     ) -> anyhow::Result<AggCircuitProof> {
+        // See comments in `create_solidity_verifier()`.
         let circuit_results: Vec<ProvedCircuit> = vec![
             self.prove_circuit::<EvmCircuit>(block_results)?,
             self.prove_circuit::<StateCircuit>(block_results)?,
             self.prove_circuit::<PoseidonCircuit>(block_results)?,
             self.prove_circuit::<ZktrieCircuit>(block_results)?,
         ];
-        self.create_agg_circuit_proof_impl(circuit_results)
+        self.create_agg_circuit_proof_impl(circuit_results, verify_circuit_vk)
     }
 
     // commitments of columns of shared tables of circuits should be same
@@ -296,6 +316,7 @@ impl Prover {
     pub fn create_agg_circuit_proof_impl(
         &mut self,
         circuit_results: Vec<ProvedCircuit>,
+        verify_circuit_vk: Option<VerifyingKey<G1Affine>>,
     ) -> anyhow::Result<AggCircuitProof> {
         let target_circuits = from_0_to_n::<CIRCUIT_NUM>();
         ///////////////////////////// build verifier circuit from block result ///////////////////
@@ -369,8 +390,11 @@ impl Prover {
         if self.agg_pk.is_none() {
             log::info!("init_agg_pk: init from verifier circuit");
 
-            let verify_circuit_vk =
-                keygen_vk(&self.agg_params, &verify_circuit).expect("keygen_vk should not fail");
+            let verify_circuit_vk = if verify_circuit_vk.is_some() {
+                verify_circuit_vk.unwrap()
+            } else {
+                keygen_vk(&self.agg_params, &verify_circuit).expect("keygen_vk should not fail")
+            };
 
             let verify_circuit_pk = keygen_pk(&self.agg_params, verify_circuit_vk, &verify_circuit)
                 .expect("keygen_pk should not fail");

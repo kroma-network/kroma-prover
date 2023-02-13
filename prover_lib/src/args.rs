@@ -9,6 +9,9 @@ pub struct Args {
     /// Get seed and write into file.
     #[clap(long = "seed")]
     pub seed_path: Option<String>,
+    /// Get verify circuit verifying key.
+    #[clap(long = "vkey")]
+    pub vkey_path: Option<String>,
     /// Get BlockTrace from file or dir.
     #[clap(short, long = "trace")]
     pub race_path: Option<String>,

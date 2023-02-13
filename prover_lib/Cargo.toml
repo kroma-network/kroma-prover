@@ -14,5 +14,6 @@ types = { path = "../types", features = ["test"] }
 utils = { path = "../utils" }
 zkevm = { path = "../zkevm" }
 halo2_proofs = { git = "https://github.com/light-scale/halo2.git", branch = "ls-dev-0902" }
+halo2-snark-aggregator-circuit = { git = "https://github.com/light-scale/halo2-snark-aggregator", branch = "ls-dev-0920-tpl" }
 once_cell = "1.17.0"
 l2client = { path = "../l2client" }

@@ -1,6 +1,11 @@
 use super::args::Args;
 use super::params_seed::ParamsSeed;
 use anyhow::Result;
+use halo2_proofs::{
+    halo2curves::bn256::{Bn256, G1Affine},
+    plonk::VerifyingKey,
+};
+use halo2_snark_aggregator_circuit::verify_circuit::Halo2VerifierCircuit;
 use l2client::L2Client;
 use log::info;
 use once_cell::sync::Lazy;
@@ -8,14 +13,15 @@ use rand_core::SeedableRng;
 use rand_xorshift::XorShiftRng;
 use std::{
     fs::{create_dir_all, File},
-    io::Write,
+    io::{Cursor, Write},
     path::PathBuf,
+    str::FromStr,
 };
 use types::eth::BlockResult;
 use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
-    io::write_file,
+    io::{load_verify_circuit_vk, write_file},
     prover::Prover,
     utils::read_env_var,
     utils::{load_or_create_params, load_or_create_seed},
@@ -116,10 +122,26 @@ impl ProverLib {
         }
 
         if args.agg_proof.is_some() {
+            let verify_circuit_vk;
+            if prover.agg_pk.is_none() && args.vkey_path.is_some() {
+                let mut path = PathBuf::from_str(args.vkey_path.as_ref().unwrap()).unwrap();
+                let vk = load_verify_circuit_vk(&mut path);
+
+                verify_circuit_vk = Some(
+                    VerifyingKey::<G1Affine>::read::<_, Halo2VerifierCircuit<'_, Bn256>, Bn256, _>(
+                        &mut Cursor::new(&vk),
+                        &prover.params,
+                    )
+                    .unwrap(),
+                );
+            } else {
+                verify_circuit_vk = None;
+            }
+
             let mut proof_path = PathBuf::from(&dir_name).join("agg.proof");
 
             let agg_proof = prover
-                .create_agg_circuit_proof(&trace)
+                .create_agg_circuit_proof(&trace, verify_circuit_vk)
                 .expect("cannot generate agg_proof");
 
             if args.agg_proof.unwrap() {
