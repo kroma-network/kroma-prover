@@ -280,7 +280,7 @@ impl Prover {
         &mut self,
         block_traces: &[BlockTrace],
     ) -> anyhow::Result<AggCircuitProof> {
-         // See comments in `create_solidity_verifier()`.
+        // See comments in `create_solidity_verifier()`.
         let circuit_results: Vec<ProvedCircuit> =
             vec![self.prove_circuit::<SuperCircuit>(block_traces)?];
         self.create_agg_circuit_proof_impl(circuit_results)
