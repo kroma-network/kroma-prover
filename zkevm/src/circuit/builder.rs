@@ -21,6 +21,11 @@ use is_even::IsEven;
 use itertools::Itertools;
 use std::time::Instant;
 
+#[cfg(not(feature = "zktrie"))]
+pub const SUB_CIRCUIT_NAMES: [&str; 10] = [
+    "evm", "state", "bytecode", "copy", "keccak", "tx", "rlp", "exp", "pi", "poseidon",
+];
+#[cfg(feature = "zktrie")]
 pub const SUB_CIRCUIT_NAMES: [&str; 11] = [
     "evm", "state", "bytecode", "copy", "keccak", "tx", "rlp", "exp", "pi", "poseidon", "mpt",
 ];
@@ -384,7 +389,7 @@ fn trace_code(cdb: &mut CodeDB, step: &ExecStep, sdb: &StateDB, code: Bytes, sta
 
     // sanity check
     let (existed, data) = sdb.get_account(&addr);
-    if existed && !data.code_size.is_zero() {
+    if existed && data.code_hash == CodeDB::empty_code_hash() {
         assert_eq!(
             hash, data.code_hash,
             "invalid codehash for existed account {addr:?}, {data:?}"

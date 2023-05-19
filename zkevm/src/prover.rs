@@ -29,7 +29,7 @@ use halo2_snark_aggregator_circuit::verify_circuit::{
     final_pair_to_instances, Halo2CircuitInstance, Halo2CircuitInstances, Halo2VerifierCircuit,
     Halo2VerifierCircuits, SingleProofWitness,
 };
-use halo2_snark_aggregator_solidity::MultiCircuitSolidityGenerate;
+use halo2_snark_aggregator_solidity::{MultiCircuitSolidityGenerate, SolidityGenerate};
 use log::info;
 use once_cell::sync::Lazy;
 
@@ -243,7 +243,23 @@ impl Prover {
     }
 
     pub fn create_solidity_verifier(&self, proof: &AggCircuitProof) -> String {
+        fn from_0_to_n<const N: usize>() -> [usize; N] {
+            core::array::from_fn(|i| i)
+        }
+        // NOTE: If any changes are made to circuit aggregation, names should be reflected, too.
+        let names = [SuperCircuit::name()];
         MultiCircuitSolidityGenerate {
+            target_circuits_params: from_0_to_n::<1>().map(|circuit_index| SolidityGenerate {
+                target_circuit_params: self.params.clone(),
+                target_circuit_vk: self
+                    .target_circuit_pks
+                    .get(&names[circuit_index])
+                    .unwrap()
+                    .get_vk()
+                    .clone(),
+                nproofs: 1,
+            }),
+
             verify_vk: self.agg_pk.as_ref().expect("pk should be inited").get_vk(),
             verify_params: &self.agg_params,
             verify_circuit_instance: load_instances(&proof.instance),
@@ -264,6 +280,7 @@ impl Prover {
         &mut self,
         block_traces: &[BlockTrace],
     ) -> anyhow::Result<AggCircuitProof> {
+         // See comments in `create_solidity_verifier()`.
         let circuit_results: Vec<ProvedCircuit> =
             vec![self.prove_circuit::<SuperCircuit>(block_traces)?];
         self.create_agg_circuit_proof_impl(circuit_results)
