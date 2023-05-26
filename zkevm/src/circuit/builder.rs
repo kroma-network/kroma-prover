@@ -9,17 +9,16 @@ use eth_types::ToAddress;
 use ethers_core::types::{Bytes, U256};
 use types::eth::{BlockTrace, EthBlock, ExecStep};
 
+use anyhow::bail;
+use eth_types::geth_types::DEPOSIT_TX_TYPE;
+use halo2_proofs::halo2curves::bn256::Fr;
+use is_even::IsEven;
+use itertools::Itertools;
 use mpt_zktrie::state::ZktrieState;
+use std::time::Instant;
 use zkevm_circuits::evm_circuit::witness::block_apply_mpt_state;
 use zkevm_circuits::evm_circuit::witness::{block_convert, Block};
 use zkevm_circuits::util::SubCircuit;
-
-use halo2_proofs::halo2curves::bn256::Fr;
-
-use anyhow::bail;
-use is_even::IsEven;
-use itertools::Itertools;
-use std::time::Instant;
 
 #[cfg(not(feature = "zktrie"))]
 pub const SUB_CIRCUIT_NAMES: [&str; 10] = [
@@ -201,7 +200,19 @@ pub fn block_traces_to_witness_block(
     let mut builder = CircuitInputBuilder::new(state_db.clone(), code_db, &builder_block);
     for (idx, block_trace) in block_traces.iter().enumerate() {
         let is_last = idx == block_traces.len() - 1;
-        let eth_block: EthBlock = block_trace.clone().into();
+        let mut eth_block: EthBlock = block_trace.clone().into();
+        eth_block.transactions.iter_mut().for_each(|transaction|{
+            if let Some(transaction_type) = transaction.transaction_type && transaction_type.as_u64() == DEPOSIT_TX_TYPE {
+                // NOTE(chokobole): The nonce of Kanvas deposit tx is set to 0 by default.
+                // This causes an error at assert statement in zkevm-circuits.
+                // See gen_begin_tx_ops in bus-mappings/src/evm/opcodes.rs in zkevm-circuits for details.
+                // So here we explicitly set the known nonce from state db to the transaction.
+                // We have an alternative to make go-ethereum or kanvas-node to set nonce explicitly.
+                // But I think this is the fastest way to satisfy requirements.
+                transaction.nonce = U256::from(builder.sdb.get_nonce(&transaction.from));
+            }
+
+        });
 
         let mut geth_trace = Vec::new();
         for result in &block_trace.execution_results {
