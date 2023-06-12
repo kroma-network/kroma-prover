@@ -12,11 +12,11 @@ halo2-snark-aggregator-api = { git = "https://github.com/kroma-network/halo2-sna
 
 halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", tag = "v2022_09_10" }
 
-bus-mapping = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "f1072fe", feature = ["kroma"] }
-eth-types = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "f1072fe", feature = ["kroma"] }
+bus-mapping = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "17094d6", feature = ["kroma"] }
+eth-types = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "17094d6", feature = ["kroma"] }
 # TODO: enable zktrie feature
-zkevm-circuits = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "f1072fe", default-features = false, features = ["test","enable-sign-verify", "kroma"] }
-mpt-zktrie = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "f1072fe" }
+zkevm-circuits = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "17094d6", default-features = false, features = ["test","enable-sign-verify", "kroma"] }
+mpt-zktrie = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "17094d6" }
 
 rand = "0.8"
 rand_xorshift = "0.3"
