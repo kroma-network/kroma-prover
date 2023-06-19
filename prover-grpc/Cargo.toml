@@ -1,0 +1,46 @@
+[package]
+name = "prover-grpc"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.69"
+log = "0.4.17"
+prost = "0.11.6"
+tonic = "0.8.3"
+signal-hook = "0.3.14"
+clap = { version = "4.1.4", features = ["derive"] }
+once_cell = "1.17.0"
+jsonrpsee-core = "0.16.2"
+rand = "0.8"
+rand_core = "0.6.4"
+rand_xorshift = "0.3"
+jsonrpsee = { version = "0.16.2", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+enum-iterator = "1.4.1"
+serde_json = "1.0.96"
+serde_derive = "1.0.164"
+serde = "1.0.164"
+
+halo2_proofs = { git = "https://github.com/kroma-network/halo2.git", branch = "kroma-v0.3.0"  }
+types = { path = "../types", features = ["test"] }
+zkevm = { path = "../zkevm" }
+utils = { path = "../utils" }
+dotenv = "0.15.0"
+env_logger = "0.10.0"
+hex = "0.4.3"
+thiserror = "1.0.40"
+
+[build-dependencies]
+tonic-build = "0.8.4"
+tokio-test = "*"
+
+[[bin]]
+name = "prover-server"
+path = "src/prover_server.rs"
+
+[[bin]]
+name = "client-mock"
+path = "src/client_mock.rs"

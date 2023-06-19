@@ -2,12 +2,16 @@ use clap::Parser;
 use log::info;
 use rand::SeedableRng;
 use rand_xorshift::XorShiftRng;
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::create_dir_all};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::time::Instant;
+<<<<<<< Updated upstream
+=======
+use std::collections::HashMap;
+>>>>>>> Stashed changes
 use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
@@ -79,6 +83,13 @@ fn main() {
     let outer_now = Instant::now();
     for (trace_name, trace) in traces {
         let mut out_dir = PathBuf::from(&trace_name);
+<<<<<<< Updated upstream
+        create_dir_all(&out_dir).unwrap();
+        
+=======
+        fs::create_dir_all(&out_dir).unwrap();
+
+>>>>>>> Stashed changes
         timer.start();
         prover.debug_dir = String::from(out_dir.to_str().unwrap());
         if args.evm_proof.is_some() {
