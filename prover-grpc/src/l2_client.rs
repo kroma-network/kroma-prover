@@ -4,8 +4,8 @@ use jsonrpsee::{
     http_client::{HttpClient, HttpClientBuilder},
     rpc_params,
 };
-use types::eth::BlockTrace;
 use thiserror::Error;
+use types::eth::BlockTrace;
 
 /// It will be available after typing `make devnet-up` at root of kroma-network/kroma@dev)
 pub static DEFAULT_RPC_URL: &str = "http://localhost:9545";
@@ -16,7 +16,7 @@ pub enum ClientError {
     Init,
 
     #[error("failed to get block trace")]
-    BlockTrace
+    BlockTrace,
 }
 
 /// An Ethereum rpc client

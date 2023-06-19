@@ -37,9 +37,9 @@ const MAX_EXP_STEPS: usize = 10_000;
 
 ////// params for degree = 20 ////////////
 pub static DEGREE: Lazy<usize> = Lazy::new(|| read_env_var("DEGREE", 20));
-const MAX_TXS: usize = 25;
+pub const MAX_TXS: usize = 25;
 const MAX_INNER_BLOCKS: usize = 1;
-const MAX_CALLDATA: usize = 400_000;
+pub const MAX_CALLDATA: usize = 400_000;
 const MAX_RWS: usize = 1_000_000;
 const MAX_KECCAK_ROWS: usize = 524_000;
 const MAX_EXP_STEPS: usize = 10_000;
