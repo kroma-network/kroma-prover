@@ -1,0 +1,9 @@
+# Components
+/bin		@kroma-network/zkp
+/contrib	@kroma-network/zkp
+/ffi		@kroma-network/zkp
+/types		@kroma-network/zkp
+/zkevm		@kroma-network/zkp
+
+# Ops
+/.github  	@kroma-network/zkp
