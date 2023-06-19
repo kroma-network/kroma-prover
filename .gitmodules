@@ -1,3 +1,3 @@
-[submodule "kanvas-grpc-proto"]
-	path = kanvas-grpc-proto
-	url = https://github.com/light-scale/kanvas-grpc-proto.git
+[submodule "prover-grpc/kroma-prover-grpc-proto"]
+	path = prover-grpc/kroma-prover-grpc-proto
+	url = https://github.com/kroma-network/kroma-prover-grpc-proto.git
