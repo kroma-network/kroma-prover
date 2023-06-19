@@ -1,4 +1,6 @@
 pub mod l2_client;
+pub mod prover_lib;
+pub mod utils;
 pub mod proof {
     tonic::include_proto!("proof");
 }

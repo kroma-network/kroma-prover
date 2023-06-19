@@ -41,6 +41,3 @@ tokio-test = "*"
 name = "prover-server"
 path = "src/prover_server.rs"
 
-[[bin]]
-name = "client-mock"
-path = "src/client_mock.rs"
