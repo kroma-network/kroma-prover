@@ -21,15 +21,7 @@ serde_derive = "1.0"
 serde_json = "1.0.66"
 tokio = { version = "1", features = ["full"] }
 zkevm = { path = "../zkevm" }
-tokio-stream = "0.1"
-mime_guess = "2"
-aws-config = "0.6"
-aws-sdk-s3 = "0.6"
-futures = "0.3"
-jsonrpsee = { version = "0.16.2", features = ["full"] }
-tracing-subscriber = { version = "0.3.3", features = ["env-filter"] }
 types = { path = "../types", features = ["test"] }
-jsonrpsee-core = "0.16.2"
 utils = { path = "../utils" }
 
 [[bin]]
@@ -47,4 +39,3 @@ path = "src/verify.rs"
 [[bin]]
 name = "mock_testnet"
 path = "src/mock_testnet.rs"
-

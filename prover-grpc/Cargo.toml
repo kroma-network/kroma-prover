@@ -35,7 +35,6 @@ thiserror = "1.0.40"
 
 [build-dependencies]
 tonic-build = "0.8.4"
-tokio-test = "*"
 
 [[bin]]
 name = "prover-server"

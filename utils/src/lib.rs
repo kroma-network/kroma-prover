@@ -5,11 +5,17 @@ pub struct Measurer {
     now: Instant,
 }
 
+impl Default for Measurer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Measurer {
     pub fn new() -> Measurer {
-        return Measurer {
+        Measurer {
             now: Instant::now(),
-        };
+        }
     }
 
     pub fn start(&mut self) {

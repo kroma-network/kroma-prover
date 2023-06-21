@@ -1,5 +1,4 @@
 use clap::Parser;
-use log::info;
 use rand::SeedableRng;
 use rand_xorshift::XorShiftRng;
 use std::collections::HashMap;
@@ -7,7 +6,6 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use std::time::Instant;
 use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
@@ -46,10 +44,10 @@ fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    let mut timer = Measurer::new();
-
-    timer.start();
     let args = Args::parse();
+
+    // Prepare KZG params and rng for prover
+    let mut timer = Measurer::new();
     let params = load_or_create_params(&args.params_path.clone().unwrap(), *DEGREE)
         .expect("failed to load or create params");
     let agg_params = load_or_create_params(&args.params_path.unwrap(), *AGG_DEGREE)
@@ -61,6 +59,7 @@ fn main() {
     let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
     timer.end("finish loading params");
 
+    // Getting traces from specific directory
     let mut traces = HashMap::new();
     let trace_path = PathBuf::from(&args.trace_path.unwrap());
     if trace_path.is_dir() {
@@ -76,7 +75,8 @@ fn main() {
         traces.insert(trace_path.file_stem().unwrap().to_os_string(), block_trace);
     }
 
-    let outer_now = Instant::now();
+    // Generating proofs for each trace
+    let mut outer_timer = Measurer::new();
     for (trace_name, trace) in traces {
         let mut out_dir = PathBuf::from(&trace_name);
         fs::create_dir_all(&out_dir).unwrap();
@@ -129,8 +129,7 @@ fn main() {
             );
             log::info!("output files to {}", out_dir.to_str().unwrap());
         }
-
         timer.end("finish generating a proof");
     }
-    info!("finish generating all, elapsed: {:?}", outer_now.elapsed());
+    outer_timer.end("finish generating all");
 }

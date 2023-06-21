@@ -26,9 +26,7 @@ pub struct L2Client {
 
 impl Default for L2Client {
     fn default() -> Self {
-        let http_client = HttpClientBuilder::default()
-            .build(DEFAULT_RPC_URL.clone())
-            .unwrap();
+        let http_client = HttpClientBuilder::default().build(DEFAULT_RPC_URL).unwrap();
         Self { http_client }
     }
 }

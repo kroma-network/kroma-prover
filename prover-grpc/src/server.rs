@@ -55,9 +55,11 @@ impl GrpcServer {
     }
 
     pub fn from_config_file(config_path: &PathBuf) -> Self {
-        let file = File::open(config_path).expect(&kroma_msg("fail to open config file."));
-        let deserialized: RawConfig = serde_json::from_reader(file)
-            .expect(&kroma_msg("config file was not well-formatted json."));
+        let file = File::open(config_path)
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to open config file.")));
+        let deserialized: RawConfig = serde_json::from_reader(file).unwrap_or_else(|_| {
+            panic!("{}", kroma_msg("config file was not well-formatted json."))
+        });
 
         // params dir is specified, but not exists.
         if !deserialized.params_dir.is_dir() & !deserialized.params_dir.is_file() {
@@ -109,28 +111,23 @@ impl GrpcServer {
             self.verifier_name.clone(),
         );
 
-        kroma_info(format!(
-            "Grpc server running on {}",
-            self.grpc_addr.to_string()
-        ));
+        kroma_info(format!("Grpc server running on {}", self.grpc_addr));
         let mut server = Server::builder();
         server
             .add_service(ProofServer::new(service))
-            .serve_with_shutdown(self.grpc_addr.into(), self.watch_for_shutdown())
+            .serve_with_shutdown(self.grpc_addr, self.watch_for_shutdown())
             .await?;
 
         Ok(())
     }
 
-    async fn watch_for_shutdown(&self) -> () {
-        let mut signals = Signals::new(&[SIGINT, SIGTERM, SIGHUP]).unwrap();
+    async fn watch_for_shutdown(&self) {
+        let mut signals = Signals::new([SIGINT, SIGTERM, SIGHUP]).unwrap();
         let join_handle = tokio::spawn(async move {
-            for sig in signals.forever() {
+            if let Some(sig) = signals.forever().next() {
                 kroma_info(format!(
-                    "Received signal {:?}. Shutting down grpc server",
-                    sig
+                    "Received signal {sig:?}. Shutting down grpc server"
                 ));
-                return ();
             }
         });
         join_handle.await.unwrap();

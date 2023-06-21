@@ -3,6 +3,7 @@ use crate::proof::proof_server::Proof;
 use crate::proof::{ProofRequest, ProofResponse, ProverSpecRequest, ProverSpecResponse};
 use crate::utils::{kroma_info, kroma_msg, write_agg_proof, write_solidity, write_target_proof};
 use anyhow::Result;
+use core::panic;
 use enum_iterator::{all, Sequence};
 use halo2_proofs::halo2curves::bn256::Bn256;
 use halo2_proofs::poly::kzg::commitment::ParamsKZG;
@@ -13,6 +14,7 @@ use rand_xorshift::XorShiftRng;
 use serde_json;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
+use std::path::Path;
 use std::{fmt, fs::create_dir_all, path::PathBuf};
 use tonic::{Request, Response, Status};
 use types::eth::BlockTrace;
@@ -104,9 +106,7 @@ impl Default for ProverLib {
         Self::new(
             &DEFAULT_PARAMS_DIR,
             &DEFAULT_SEED_PATH,
-            HttpClientBuilder::default()
-                .build(DEFAULT_RPC_URL.clone())
-                .unwrap(),
+            HttpClientBuilder::default().build(DEFAULT_RPC_URL).unwrap(),
             &DEFAULT_OUT_DIR,
             "verifier.sol".to_string(),
         )
@@ -115,10 +115,10 @@ impl Default for ProverLib {
 
 impl ProverLib {
     pub fn new(
-        params_dir: &PathBuf,
-        seed_path: &PathBuf,
+        params_dir: &Path,
+        seed_path: &Path,
         l2_rpc_endpoint: HttpClient,
-        proof_out_dir: &PathBuf,
+        proof_out_dir: &Path,
         verifier_name: String,
     ) -> Self {
         // ensure params_dir is a directory
@@ -131,28 +131,26 @@ impl ProverLib {
             panic!("seed_dir must be a file")
         }
 
-        // ensure out_dir is a directory (create dir if it does not exists)
-        if proof_out_dir.is_file() {
+        // create dir and check whether proof_out_dir is a directory.
+        let _ = create_dir_all(proof_out_dir);
+        if !proof_out_dir.is_dir() {
             panic!("out_dir must be a directory");
-        }
-        if proof_out_dir.is_dir() {
-            let _ = create_dir_all(proof_out_dir);
         }
 
         // load and create material for prover
         let params = load_or_create_params(params_dir.to_str().unwrap(), *DEGREE)
-            .expect(&kroma_msg("fail to load or create params"));
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create params")));
         let agg_params = load_or_create_params(params_dir.to_str().unwrap(), *AGG_DEGREE)
-            .expect(&kroma_msg("fail to load or create params"));
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create params")));
         let seed = load_or_create_seed(seed_path.to_str().unwrap())
-            .expect(&kroma_msg("fail to load or create seed"));
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create seed")));
 
         Self {
             params,
             agg_params,
             seed,
             l2_client: L2Client::new(l2_rpc_endpoint),
-            out_proof_dir: proof_out_dir.clone(),
+            out_proof_dir: proof_out_dir.to_path_buf(),
             verifier_name,
         }
     }
@@ -170,6 +168,8 @@ impl ProverLib {
     }
 
     pub fn file_out_flag(&self) -> bool {
+        let msg = self.out_proof_dir.to_str().unwrap();
+        kroma_info(format!("check exporting flag: {msg}"));
         self.out_proof_dir.is_dir()
     }
 
@@ -186,7 +186,7 @@ impl ProverLib {
 
         let proof = prover
             .create_agg_circuit_proof(&trace)
-            .expect(&kroma_msg("cannot generate agg_proof"));
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("cannot generate agg_proof")));
 
         timer.end(&kroma_msg("finish generating a proof"));
 
@@ -220,13 +220,13 @@ impl ProverLib {
         let proof = match proof_type {
             ProofType::EVM => prover
                 .create_target_circuit_proof::<EvmCircuit>(&trace)
-                .expect(&kroma_msg("cannot generate evm_proof")),
+                .unwrap_or_else(|_| panic!("{}", kroma_msg("cannot generate evm_proof"))),
             ProofType::STATE => prover
                 .create_target_circuit_proof::<StateCircuit>(&trace)
-                .expect(&kroma_msg("cannot generate state_proof")),
+                .unwrap_or_else(|_| panic!("{}", kroma_msg("cannot generate state_proof"))),
             ProofType::SUPER => prover
                 .create_target_circuit_proof::<SuperCircuit>(&trace)
-                .expect(&kroma_msg("cannot generate super_proof")),
+                .unwrap_or_else(|_| panic!("{}", kroma_msg("cannot generate super_proof"))),
             _ => {
                 panic!("Invalid proof type");
             }
@@ -251,7 +251,7 @@ impl ProverLib {
         proof_type: ProofType,
     ) -> Result<ProofResult> {
         // build prover and set dir to export output
-        let rng = XorShiftRng::from_seed(self.seed.clone());
+        let rng = XorShiftRng::from_seed(self.seed);
         let mut prover =
             Prover::from_params_and_rng(self.params.clone(), self.agg_params.clone(), rng);
 
@@ -328,11 +328,7 @@ impl Proof for ProverLib {
 
 #[cfg(test)]
 mod prover_lib_tests {
-    use crate::{
-        prover_lib::{ProofType, ProverLib},
-        utils::kroma_msg,
-    };
-    use std::collections::HashMap;
+    use crate::prover_lib::{ProofType, ProverLib};
     use zkevm::utils::get_block_trace_from_file;
 
     pub static DEFAULT_TRACE_PATH: &str = "../zkevm/tests/traces/impure/simple/impure.json";

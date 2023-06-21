@@ -32,8 +32,7 @@ async fn test_request_proof(addr_str: String, proof_type: ProofType) -> bool {
     });
 
     kroma_info(format!(
-        "Send 'prove' request: height({}), proof_type({})",
-        block_number_hex, proof_type
+        "Send 'prove' request: height({block_number_hex}), proof_type({proof_type})"
     ));
 
     let mut client = ProofClient::connect(addr_str).await.unwrap();
@@ -51,13 +50,13 @@ async fn test_request_proof(addr_str: String, proof_type: ProofType) -> bool {
 async fn test_request_spec(addr_str: String) -> bool {
     let request = tonic::Request::new(ProverSpecRequest {});
 
-    kroma_info(format!("Send 'spec' request to prover-grpc"));
+    kroma_info("Send 'spec' request to prover-grpc");
 
     let mut client = ProofClient::connect(addr_str).await.unwrap();
     let response = client.spec(request).await.unwrap();
 
     let proof_type_str: &String = &response.get_ref().proof_type_desc;
-    let proof_type_map: HashMap<String, u32> = serde_json::from_str(&proof_type_str).unwrap();
+    let proof_type_map: HashMap<String, u32> = serde_json::from_str(proof_type_str).unwrap();
 
     kroma_info(format!(
         "Got: \
@@ -83,11 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    let addr_str = format!(
-        "http://{}:{}",
-        DEFAULT_GRPC_IP.to_string(),
-        DEFAULT_GRPC_PORT
-    );
+    let addr_str = format!("http://{DEFAULT_GRPC_IP}:{DEFAULT_GRPC_PORT}");
 
     let args = Args::parse();
     if args.spec.is_some() {

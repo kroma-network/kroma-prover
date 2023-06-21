@@ -71,7 +71,7 @@ pub struct TransactionTrace {
     pub r: U256,
     pub s: U256,
 
-    // Kanvas deposit tx
+    // Kroma deposit tx
     pub mint: Option<U256>,
 }
 
@@ -105,7 +105,7 @@ impl TransactionTrace {
             other: Default::default(),
         };
         if let Some(mint) = self.mint {
-            let json_value = format!("{{\"mint\": \"{}\"}}", mint.to_string());
+            let json_value = format!("{{\"mint\": \"{mint}\"}}");
             tx.other = serde_json::from_str(json_value.as_str()).unwrap();
         }
         tx
