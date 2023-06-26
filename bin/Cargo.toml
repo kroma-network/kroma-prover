@@ -20,8 +20,9 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0.66"
 tokio = { version = "1", features = ["full"] }
-types = { path = "../types" }
 zkevm = { path = "../zkevm" }
+types = { path = "../types", features = ["test"] }
+utils = { path = "../utils" }
 
 [[bin]]
 name = "setup"

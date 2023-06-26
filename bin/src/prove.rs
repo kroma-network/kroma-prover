@@ -1,5 +1,4 @@
 use clap::Parser;
-use log::info;
 use rand::SeedableRng;
 use rand_xorshift::XorShiftRng;
 use std::collections::HashMap;
@@ -7,9 +6,10 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use std::time::Instant;
+use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
+    io::write_file,
     prover::Prover,
     utils::{get_block_trace_from_file, load_or_create_params, load_or_create_seed},
 };
@@ -45,6 +45,9 @@ fn main() {
     env_logger::init();
 
     let args = Args::parse();
+
+    // Prepare KZG params and rng for prover
+    let mut timer = Measurer::new();
     let params = load_or_create_params(&args.params_path.clone().unwrap(), *DEGREE)
         .expect("failed to load or create params");
     let agg_params = load_or_create_params(&args.params_path.unwrap(), *AGG_DEGREE)
@@ -54,7 +57,9 @@ fn main() {
     let rng = XorShiftRng::from_seed(seed);
 
     let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
+    timer.end("finish loading params");
 
+    // Getting traces from specific directory
     let mut traces = HashMap::new();
     let trace_path = PathBuf::from(&args.trace_path.unwrap());
     if trace_path.is_dir() {
@@ -70,20 +75,20 @@ fn main() {
         traces.insert(trace_path.file_stem().unwrap().to_os_string(), block_trace);
     }
 
-    let outer_now = Instant::now();
+    // Generating proofs for each trace
+    let mut outer_timer = Measurer::new();
     for (trace_name, trace) in traces {
+        let mut out_dir = PathBuf::from(&trace_name);
+        fs::create_dir_all(&out_dir).unwrap();
+
+        timer.start();
+        prover.debug_dir = String::from(out_dir.to_str().unwrap());
         if args.evm_proof.is_some() {
             let proof_path = PathBuf::from(&trace_name).join("evm.proof");
 
-            let now = Instant::now();
             let evm_proof = prover
                 .create_target_circuit_proof::<EvmCircuit>(&trace)
                 .expect("cannot generate evm_proof");
-            info!(
-                "finish generating evm proof of {}, elapsed: {:?}",
-                &trace.header.hash.unwrap(),
-                now.elapsed()
-            );
 
             if args.evm_proof.unwrap() {
                 let mut f = File::create(&proof_path).unwrap();
@@ -94,15 +99,9 @@ fn main() {
         if args.state_proof.is_some() {
             let proof_path = PathBuf::from(&trace_name).join("state.proof");
 
-            let now = Instant::now();
             let state_proof = prover
                 .create_target_circuit_proof::<StateCircuit>(&trace)
                 .expect("cannot generate state_proof");
-            info!(
-                "finish generating state proof of {}, elapsed: {:?}",
-                &trace.header.hash.unwrap(),
-                now.elapsed()
-            );
 
             if args.state_proof.unwrap() {
                 let mut f = File::create(&proof_path).unwrap();
@@ -113,21 +112,24 @@ fn main() {
         if args.agg_proof.is_some() {
             let mut proof_path = PathBuf::from(&trace_name).join("agg.proof");
 
-            let now = Instant::now();
             let agg_proof = prover
                 .create_agg_circuit_proof(&trace)
                 .expect("cannot generate agg_proof");
-            info!(
-                "finish generating agg proof of {}, elapsed: {:?}",
-                &trace.header.hash.unwrap(),
-                now.elapsed()
-            );
 
             if args.agg_proof.unwrap() {
                 fs::create_dir_all(&proof_path).unwrap();
                 agg_proof.write_to_dir(&mut proof_path);
             }
+
+            let sol = prover.create_solidity_verifier(&agg_proof);
+            write_file(
+                &mut out_dir,
+                "verifier.sol",
+                &Vec::<u8>::from(sol.as_bytes()),
+            );
+            log::info!("output files to {}", out_dir.to_str().unwrap());
         }
+        timer.end("finish generating a proof");
     }
-    info!("finish generating all, elapsed: {:?}", outer_now.elapsed());
+    outer_timer.end("finish generating all");
 }

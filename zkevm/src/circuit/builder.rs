@@ -2,24 +2,21 @@ use super::{MAX_CALLDATA, MAX_EXP_STEPS, MAX_RWS, MAX_TXS};
 use crate::circuit::{
     TargetCircuit, AUTO_TRUNCATE, CHAIN_ID, DEGREE, MAX_INNER_BLOCKS, MAX_KECCAK_ROWS,
 };
+use anyhow::bail;
 use bus_mapping::circuit_input_builder::{self, BlockHead, CircuitInputBuilder, CircuitsParams};
 use bus_mapping::state_db::{Account, CodeDB, StateDB};
-use eth_types::evm_types::OpcodeId;
-use eth_types::ToAddress;
+use eth_types::{evm_types::OpcodeId, geth_types::DEPOSIT_TX_TYPE, ToAddress};
 use ethers_core::types::{Bytes, U256};
-use types::eth::{BlockTrace, EthBlock, ExecStep};
-
-use mpt_zktrie::state::ZktrieState;
-use zkevm_circuits::evm_circuit::witness::block_apply_mpt_state;
-use zkevm_circuits::evm_circuit::witness::{block_convert, Block};
-use zkevm_circuits::util::SubCircuit;
-
 use halo2_proofs::halo2curves::bn256::Fr;
-
-use anyhow::bail;
 use is_even::IsEven;
 use itertools::Itertools;
+use mpt_zktrie::state::ZktrieState;
 use std::time::Instant;
+use types::eth::{BlockTrace, EthBlock, ExecStep};
+use zkevm_circuits::{
+    evm_circuit::witness::{block_apply_mpt_state, block_convert, Block},
+    util::SubCircuit,
+};
 
 #[cfg(not(feature = "zktrie"))]
 pub const SUB_CIRCUIT_NAMES: [&str; 10] = [
@@ -165,9 +162,16 @@ pub fn block_traces_to_witness_block(
         }),
     )?;
 
+    // TODO(dongchangYoo): It can be simplified after updating that deposit_tx has non-zero chain_id.
     let chain_ids = block_traces
         .iter()
-        .map(|block_trace| block_trace.chain_id)
+        .flat_map(|block_trace| {
+            block_trace
+                .transactions
+                .iter()
+                .find(|tx_trace| tx_trace.type_ as u64 != DEPOSIT_TX_TYPE)
+                .map(|tx_trace| tx_trace.chain_id)
+        })
         .collect::<Vec<U256>>();
 
     let chain_id = if !chain_ids.is_empty() {
@@ -201,7 +205,20 @@ pub fn block_traces_to_witness_block(
     let mut builder = CircuitInputBuilder::new(state_db.clone(), code_db, &builder_block);
     for (idx, block_trace) in block_traces.iter().enumerate() {
         let is_last = idx == block_traces.len() - 1;
-        let eth_block: EthBlock = block_trace.clone().into();
+        let mut eth_block: EthBlock = block_trace.clone().into();
+        eth_block.transactions.iter_mut().for_each(|transaction| {
+            if let Some(transaction_type) = transaction.transaction_type {
+                // NOTE(chokobole): The nonce of Kroma deposit tx is set to 0 by default.
+                // This causes an error at assert statement in zkevm-circuits.
+                // See gen_begin_tx_ops in bus-mappings/src/evm/opcodes.rs in zkevm-circuits for details.
+                // So here we explicitly set the known nonce from state db to the transaction.
+                // We have an alternative to make go-ethereum or Kroma-node to set nonce explicitly.
+                // But I think this is the fastest way to satisfy requirements.
+                if transaction_type.as_u64() == DEPOSIT_TX_TYPE {
+                    transaction.nonce = U256::from(builder.sdb.get_nonce(&transaction.from));
+                }
+            }
+        });
 
         let mut geth_trace = Vec::new();
         for result in &block_trace.execution_results {

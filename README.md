@@ -1,48 +1,78 @@
-# 📜 scroll-zkevm 📜
-[![Unit Test](https://github.com/scroll-tech/scroll-zkevm/actions/workflows/unit_test.yml/badge.svg)](https://github.com/scroll-tech/scroll-zkevm/actions/workflows/unit_test.yml)
-![issues](https://img.shields.io/github/issues/scroll-tech/scroll-zkevm)
+# Kroma Prover
 
-Scroll common rust crates.
+Users can obtain a zkevm proof for a specific block height through the kroma-prover.
 
-## Usage
+## Setup
 
-### Libraries
-Import as an dependency to use.
-
-### Binaries
-
-Setup 
 ```shell
-cargo build --release --bin setup   
+> git clone https://github.com/kroma-network/kroma-prover.git
+> cd kroma-prover
+> git submodule update --init
+```
 
-./target/release/setup --params <params-file-path> --seed <seed-file-path>
+## Kroma Prover Binary
+
+Prover server (entry: prover-grpc/src/prover_server.rs)
+
+```shell
+# build
+> cargo build --release --bin prover-server
+
+# run
+> ./target/release/prover-sever --config <config-file-path>
+```
+
+Mock client for test (entry: prover-grpc/src/client_mock.rs)
+
+```shell
+# build
+> cargo build --release --bin client-mock
+
+# run with proof type: EVM(1), STATE(2), SUPER(3), AGG(4)
+> ./target/release/client-mock --prove <proof_type_int>
+# or
+> ./target/release/client-mock --spec true
+```
+
+config file template for launching prover-server (config.json)
+
+```json
+{
+  "grpc_port": "<prover's-port-as-integer>",
+  "grpc_ip": "<prover's-ip-as-string>",
+  "params_dir": "<directory-of-KZG-params>",
+  "seed_path": "<seed-file-path-to-used-for-prover's-rng>",
+  "proof_out_dir": "<directory-for-proof-as-output>",
+  "l2_rpc_endpoint": "<rpc-endpoint-of-kroma-geth>",
+  "verifier_name": "<verifier-sol-file-name>"
+}
+```
+
+## Legacy Binaries
+
+Setup (entry: bin/src/setup.rs)
+
+```shell
+> cargo build --release --bin setup
+
+> ./target/release/setup --params <params-file-path> --seed <seed-file-path>
 ```
 
 If you run into linking issues during setup you may need to run
+
 ```shell
-cp `find ./target/release/ | grep libzktrie.so` /usr/local/lib/
+> cp `find ./target/release/ | grep libzktrie.so` /usr/local/lib/
 ```
+
 to move the zktrielib into a path where your linker can locate it
 
 Prove
+
 ```shell
-cargo build --release --bin prove
+> cargo build --release --bin prove
 
-./target/release/prove --help
+> ./target/release/prove --help
 ```
-
-## Test
-By default, prover tests are disabled due to heavy computations, if you want to run the prover tests, please run:
-```
-RUST_LOG=info cargo test --features prove_verify --release 
-```
-
-By default, it run the test for a trace corresponding to a block containing multiple erc20 txs. You can config `mode` ENV to test other trace:
-
-+ `MODE=single` for a block containing 1 erc20 tx.
-+ `MODE=native` for a block containing 1 native ETH transfer tx.
-+ `MODE=greeter` for a block containing 1 `Greeter` contract `set_value` call tx.
-+ `MODE=empty` for an empty block.
 
 ## License
 
