@@ -1,6 +1,13 @@
 # Kroma Prover
+[Kroma](https://github.com/kroma-network/kroma) is an Ethereum layer 2 network consisting of entities such as Proposer, Validators, Challengers, and more. The detailed explanations about our network and its entities can be found [here](https://github.com/kroma-network/kroma/blob/dev/specs/introduction.md).
 
-Users can obtain a zkevm proof for a specific block height through the kroma-prover.
+This [Prover](https://github.com/kroma-network/kroma/blob/dev/specs/zkevm-prover.md) is a component of the Kroma challenger that generates zkevm-proof for the Kroma blockchain. And the zkevm-proof is used as a fault proof to rectify the validator's misbehavior. The detailed explanations abount Challenge process can be found [here](https://github.com/kroma-network/kroma/blob/dev/specs/challenge.md).
+
+## Requirements
+
+- Rust(rustc 1.68.0-nightly)
+- Golang (go1.20.3)
+- ProtoBuf (libprotoc 3.21.12)
 
 ## Setup
 
@@ -66,7 +73,7 @@ If you run into linking issues during setup you may need to run
 
 to move the zktrielib into a path where your linker can locate it
 
-Prove
+Prove (entry: bin/src/prove.rs)
 
 ```shell
 > cargo build --release --bin prove
