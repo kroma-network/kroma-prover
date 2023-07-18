@@ -1,17 +1,17 @@
-pub mod l2_client;
 pub mod prover_lib;
 pub mod server;
 pub mod utils;
-pub mod proof {
-    tonic::include_proto!("proof");
+pub mod prover {
+    tonic::include_proto!("prover");
 }
 
 use crate::prover_lib::ProofType;
 use crate::server::{DEFAULT_GRPC_IP, DEFAULT_GRPC_PORT};
 use crate::utils::kroma_info;
 use clap::Parser;
-use proof::{proof_client::ProofClient, ProofRequest, ProverSpecRequest};
+use prover::{prover_client::ProverClient, ProveRequest, ProverSpecRequest};
 use std::collections::HashMap;
+use std::fs;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -24,18 +24,19 @@ struct Args {
 }
 
 async fn test_request_proof(addr_str: String, proof_type: ProofType) -> bool {
-    let block_number_hex = "0x10".to_string();
+    let trace_string =
+        fs::read_to_string("zkevm/tests/traces/kroma/multiple_transfers_0.json").unwrap();
 
-    let request = tonic::Request::new(ProofRequest {
-        block_number_hex: block_number_hex.clone(),
+    let request = tonic::Request::new(ProveRequest {
+        trace_string: trace_string.clone(),
         proof_type: proof_type.to_value(),
     });
 
     kroma_info(format!(
-        "Send 'prove' request: height({block_number_hex}), proof_type({proof_type})"
+        "Send 'prove' request with proof_type({proof_type})"
     ));
 
-    let mut client = ProofClient::connect(addr_str).await.unwrap();
+    let mut client = ProverClient::connect(addr_str).await.unwrap();
     let response = client.prove(request).await.unwrap();
 
     kroma_info(format!(
@@ -52,7 +53,7 @@ async fn test_request_spec(addr_str: String) -> bool {
 
     kroma_info("Send 'spec' request to prover-grpc");
 
-    let mut client = ProofClient::connect(addr_str).await.unwrap();
+    let mut client = ProverClient::connect(addr_str).await.unwrap();
     let response = client.spec(request).await.unwrap();
 
     let proof_type_str: &String = &response.get_ref().proof_type_desc;
@@ -89,7 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = test_request_spec(addr_str.clone()).await;
     }
     if args.prove.is_some() {
-        let proof_type = ProofType::from_value(args.prove.expect("no proof type"));
+        let proof_type = ProofType::from_value(args.prove.expect("no proof type") as i32);
         let _ = test_request_proof(addr_str, proof_type).await;
     }
 

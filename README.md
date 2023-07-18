@@ -26,7 +26,7 @@ Prover server (entry: prover-grpc/src/prover_server.rs)
 > cargo build --release --bin prover-server
 
 # run
-> ./target/release/prover-sever --config <config-file-path>
+> ./target/release/prover-server --config <config-file-path>
 ```
 
 Mock client for test (entry: prover-grpc/src/client_mock.rs)

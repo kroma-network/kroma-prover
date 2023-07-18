@@ -1,19 +1,17 @@
-use crate::l2_client::{L2Client, DEFAULT_RPC_URL};
-use crate::proof::proof_server::Proof;
-use crate::proof::{ProofRequest, ProofResponse, ProverSpecRequest, ProverSpecResponse};
+use crate::prover::prover_server::Prover as GrpcProver;
+use crate::prover::{ProveRequest, ProveResponse, ProverSpecRequest, ProverSpecResponse};
+use crate::server::RawConfig;
 use crate::utils::{kroma_info, kroma_msg, write_agg_proof, write_solidity, write_target_proof};
 use anyhow::Result;
 use core::panic;
 use enum_iterator::{all, Sequence};
-use halo2_proofs::halo2curves::bn256::Bn256;
-use halo2_proofs::poly::kzg::commitment::ParamsKZG;
-use jsonrpsee::http_client::{HttpClient, HttpClientBuilder};
 use once_cell::sync::Lazy;
 use rand_core::SeedableRng;
 use rand_xorshift::XorShiftRng;
 use serde_json;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
+use std::fs::File;
 use std::path::Path;
 use std::{fmt, fs::create_dir_all, path::PathBuf};
 use tonic::{Request, Response, Status};
@@ -53,7 +51,7 @@ impl Display for ProofType {
 
 impl ProofType {
     /// enum selector by u32-value
-    pub fn from_value(val: u32) -> Self {
+    pub fn from_value(val: i32) -> Self {
         match val {
             1 => ProofType::EVM,
             2 => ProofType::STATE,
@@ -63,7 +61,7 @@ impl ProofType {
         }
     }
 
-    pub fn to_value(&self) -> u32 {
+    pub fn to_value(&self) -> i32 {
         match self {
             ProofType::EVM => 1,
             ProofType::STATE => 2,
@@ -92,38 +90,53 @@ pub struct ProofResult {
     pub proof: Vec<u8>,
 }
 
+#[derive(Clone)]
 pub struct ProverLib {
-    params: ParamsKZG<Bn256>,
-    agg_params: ParamsKZG<Bn256>,
-    seed: [u8; 16],
-    l2_client: L2Client,
+    params_dir: PathBuf,
+    seed_path: PathBuf,
     out_proof_dir: PathBuf,
     verifier_name: String,
 }
 
 impl Default for ProverLib {
     fn default() -> Self {
-        Self::new(
-            &DEFAULT_PARAMS_DIR,
-            &DEFAULT_SEED_PATH,
-            HttpClientBuilder::default().build(DEFAULT_RPC_URL).unwrap(),
-            &DEFAULT_OUT_DIR,
-            "verifier.sol".to_string(),
-        )
+        Self {
+            params_dir: DEFAULT_PARAMS_DIR.clone(),
+            seed_path: DEFAULT_SEED_PATH.clone(),
+            out_proof_dir: DEFAULT_OUT_DIR.clone(),
+            verifier_name: "verifier.sol".to_string(),
+        }
     }
 }
 
 impl ProverLib {
+    pub fn from_config_path(config_path: &Path) -> Self {
+        let file = File::open(config_path)
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to open config file.")));
+        let config: RawConfig = serde_json::from_reader(file).unwrap_or_else(|_| {
+            panic!("{}", kroma_msg("config file was not well-formatted json."))
+        });
+
+        Self::new(
+            config.params_dir,
+            config.seed_path,
+            config.proof_out_dir,
+            config.verifier_name,
+        )
+    }
+
     pub fn new(
-        params_dir: &Path,
-        seed_path: &Path,
-        l2_rpc_endpoint: HttpClient,
-        proof_out_dir: &Path,
-        verifier_name: String,
+        params_dir: PathBuf,
+        seed_path: PathBuf,
+        proof_out_dir: Option<PathBuf>,
+        verifier_name: Option<String>,
     ) -> Self {
-        // ensure params_dir is a directory
+        // ensure `params_dir` is directory
+        if params_dir.is_file() {
+            panic!("params_dir is not allowed a file.")
+        }
         if !params_dir.is_dir() {
-            panic!("params_dir must be a directory");
+            let _ = create_dir_all(params_dir.clone());
         }
 
         // ensure seed_path is a file
@@ -131,46 +144,19 @@ impl ProverLib {
             panic!("seed_dir must be a file")
         }
 
-        // create dir and check whether proof_out_dir is a directory.
-        let _ = create_dir_all(proof_out_dir);
-        if !proof_out_dir.is_dir() {
-            panic!("out_dir must be a directory");
-        }
+        // the proof and verifier contract will be stored in `proof_out_dir`
+        let ensured_out_dir = proof_out_dir.unwrap_or(PathBuf::from("out_proof"));
+        let _ = create_dir_all(&ensured_out_dir);
 
-        // load and create material for prover
-        let params = load_or_create_params(params_dir.to_str().unwrap(), *DEGREE)
-            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create params")));
-        let agg_params = load_or_create_params(params_dir.to_str().unwrap(), *AGG_DEGREE)
-            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create params")));
-        let seed = load_or_create_seed(seed_path.to_str().unwrap())
-            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create seed")));
+        // set verifier contract's name.
+        let ensured_verifier_name = verifier_name.unwrap_or("verifier.sol".to_string());
 
         Self {
-            params,
-            agg_params,
-            seed,
-            l2_client: L2Client::new(l2_rpc_endpoint),
-            out_proof_dir: proof_out_dir.to_path_buf(),
-            verifier_name,
+            params_dir,
+            seed_path,
+            out_proof_dir: ensured_out_dir,
+            verifier_name: ensured_verifier_name,
         }
-    }
-
-    pub async fn get_block_trace_from_l2(&self, block_number_hex: String) -> Result<BlockTrace> {
-        let mut timer = Measurer::new();
-
-        let block_trace = self
-            .l2_client
-            .get_trace_by_block_number_hex(block_number_hex.clone())
-            .await?;
-
-        timer.end(&kroma_msg("finish getting block_trace"));
-        Ok(block_trace)
-    }
-
-    pub fn file_out_flag(&self) -> bool {
-        let msg = self.out_proof_dir.to_str().unwrap();
-        kroma_info(format!("check exporting flag: {msg}"));
-        self.out_proof_dir.is_dir()
     }
 
     pub async fn create_agg_proof(
@@ -194,13 +180,11 @@ impl ProverLib {
         proof_result.final_pair = Some(proof.final_pair.clone());
 
         // write proof to file (opt)
-        if self.file_out_flag() {
-            let dir = PathBuf::from(prover.debug_dir.clone());
-            write_agg_proof(&dir, &proof);
-            // always export verifier.sol when proof_type is AggProof
-            write_solidity(&prover, &proof, &dir, &self.verifier_name);
-            kroma_info(format!("output files to {}", dir.to_str().unwrap()));
-        }
+        let dir = PathBuf::from(prover.debug_dir.clone());
+        write_agg_proof(&dir, &proof);
+        // always export verifier.sol when proof_type is AggProof
+        write_solidity(&prover, &proof, &dir, &self.verifier_name);
+        kroma_info(format!("output files to {}", dir.to_str().unwrap()));
 
         Ok(proof_result)
     }
@@ -236,10 +220,8 @@ impl ProverLib {
         proof_result.proof = proof.proof.clone();
 
         // write proof to file (opt)
-        if self.file_out_flag() {
-            let proof_dir = PathBuf::from(&prover.debug_dir);
-            write_target_proof(&proof_dir, proof, proof_type);
-        }
+        let proof_dir = PathBuf::from(&prover.debug_dir);
+        write_target_proof(&proof_dir, proof, proof_type);
 
         Ok(proof_result)
     }
@@ -250,20 +232,23 @@ impl ProverLib {
         trace: BlockTrace,
         proof_type: ProofType,
     ) -> Result<ProofResult> {
-        // build prover and set dir to export output
-        let rng = XorShiftRng::from_seed(self.seed);
-        let mut prover =
-            Prover::from_params_and_rng(self.params.clone(), self.agg_params.clone(), rng);
+        // build prover
+        // load and create material for prover
+        let params = load_or_create_params(self.params_dir.to_str().unwrap(), *DEGREE)
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create params")));
+        let agg_params = load_or_create_params(self.params_dir.to_str().unwrap(), *AGG_DEGREE)
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create params")));
+        let seed = load_or_create_seed(self.seed_path.to_str().unwrap())
+            .unwrap_or_else(|_| panic!("{}", kroma_msg("fail to load or create seed")));
+        let rng = XorShiftRng::from_seed(seed);
 
-        if self.file_out_flag() {
-            // prepare dir to store proof. (i.e., self.OUT_DIR/<block_number>/)
-            let block_num_str = trace.header.number.unwrap().to_string();
-            let proof_dir = self.out_proof_dir.join(block_num_str);
-            let _ = create_dir_all(&proof_dir);
+        let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
 
-            // specify the dir to store the vk and proof of the intermediate circuit.
-            prover.debug_dir = proof_dir.to_str().unwrap().to_string();
-        }
+        // prepare dir to store proof. (i.e., self.OUT_DIR/<block_number>/)
+        let block_num_str = trace.header.number.unwrap().to_string();
+        let proof_dir = self.out_proof_dir.join(block_num_str);
+        let _ = create_dir_all(&proof_dir);
+        prover.debug_dir = self.out_proof_dir.to_str().unwrap().to_string();
 
         match proof_type {
             ProofType::NONE => {
@@ -278,26 +263,34 @@ impl ProverLib {
 }
 
 #[tonic::async_trait]
-impl Proof for ProverLib {
+impl GrpcProver for ProverLib {
     async fn prove(
         &self,
-        request: Request<ProofRequest>,
-    ) -> Result<Response<ProofResponse>, Status> {
-        let block_number_hex = &request.get_ref().block_number_hex;
+        request: Request<ProveRequest>,
+    ) -> Result<Response<ProveResponse>, Status> {
+        let trace_str: &String = &request.get_ref().trace_string;
+        let trace: BlockTrace = match serde_json::from_slice(trace_str.as_bytes()) {
+            Ok(trace) => trace,
+            Err(e) => {
+                kroma_info("Trace parsing failed");
+                return Err(Status::from_error(e.into()));
+            }
+        };
+
         let proof_type = ProofType::from_value(request.get_ref().proof_type);
 
-        // get block trace from l2 geth
-        let trace = self
-            .get_block_trace_from_l2(block_number_hex.clone())
-            .await
-            .unwrap();
-
         // generate proof
-        // note that, in case of non-agg-proof, proof_result.final_pair MUST be `None`
-        let proof_result = self.create_proof(trace, proof_type).await.unwrap();
+        // NOTE(dongchangYoo): in case of non-agg-proof, proof_result.final_pair MUST be `None`
+        let proof_result = match self.create_proof(trace, proof_type).await {
+            Ok(result) => result,
+            Err(e) => {
+                kroma_info("Proof creation failed");
+                return Err(Status::from_error(e.into()));
+            }
+        };
 
         // build grpc response
-        let message = ProofResponse {
+        let message = ProveResponse {
             final_pair: match proof_result.final_pair {
                 Some(final_pair) => final_pair,
                 None => vec![],

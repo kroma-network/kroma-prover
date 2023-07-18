@@ -1,15 +1,14 @@
-pub mod l2_client;
 pub mod prover_lib;
 pub mod server;
 pub mod utils;
-pub mod proof {
-    tonic::include_proto!("proof");
+pub mod prover {
+    tonic::include_proto!("prover");
 }
 
 use anyhow::Result;
 use clap::Parser;
 use server::GrpcServer;
-use std::path::PathBuf;
+use std::path::Path;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -24,9 +23,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
     let args = Args::parse();
-    let config_path = PathBuf::from(&args.config_path.unwrap());
-    let mut server = GrpcServer::from_config_file(&config_path);
-    server.start().await?;
+    let config_path = args.config_path.unwrap();
 
+    let config_path = Path::new(&config_path);
+    let mut server = GrpcServer::from_config_file(config_path);
+    let _ = server.start().await;
     Ok(())
 }

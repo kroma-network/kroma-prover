@@ -4,6 +4,5 @@
   "params_dir": "./test_params",
   "seed_path": "./test_seed",
   "proof_out_dir": "./out_proof",
-  "verifier_name": "zk-verifier.sol",
-  "l2_rpc_endpoint": "http://localhost:9545"
+  "verifier_name": "zk-verifier.sol"
 }
