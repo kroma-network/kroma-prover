@@ -1,4 +1,5 @@
 use eth_types::evm_types::{Gas, GasCost, OpcodeId, ProgramCounter, Stack, Storage};
+use eth_types::geth_types::DEPOSIT_TX_TYPE;
 use eth_types::{Block, GethExecStep, GethExecTrace, Hash, Transaction, Word, H256};
 use ethers_core::types::{Address, Bytes, U256, U64};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -73,6 +74,8 @@ pub struct TransactionTrace {
 
     // Kroma deposit tx
     pub mint: Option<U256>,
+    #[serde(rename = "sourceHash")]
+    pub source_hash: Option<H256>,
 }
 
 impl TransactionTrace {
@@ -104,9 +107,16 @@ impl TransactionTrace {
             chain_id: Some(self.chain_id),
             other: Default::default(),
         };
-        if let Some(mint) = self.mint {
-            let json_value = format!("{{\"mint\": \"{mint}\"}}");
-            tx.other = serde_json::from_str(json_value.as_str()).unwrap();
+        if let Some(tx_type) = tx.transaction_type {
+            if tx_type == U64::from(DEPOSIT_TX_TYPE) {
+                let mint = self.mint.unwrap();
+                let source_hash = self.source_hash.unwrap();
+
+                let mint_json_string = format!("\"mint\": \"{mint:#?}\"");
+                let source_hash_json_string = format!("\"sourceHash\": \"{source_hash:#?}\"");
+                let json_value = format!("{{{mint_json_string}, {source_hash_json_string}}}");
+                tx.other = serde_json::from_str(json_value.as_str()).unwrap();
+            }
         }
         tx
     }
