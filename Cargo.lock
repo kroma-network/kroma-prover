@@ -276,302 +276,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "aws-config"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12b964849038df43a2b4e0c20e29b67451af5a93108d757dd58b9e82f41a0ee8"
-dependencies = [
- "aws-http",
- "aws-sdk-sso",
- "aws-sdk-sts",
- "aws-smithy-async",
- "aws-smithy-client",
- "aws-smithy-http",
- "aws-smithy-http-tower",
- "aws-smithy-json",
- "aws-smithy-types",
- "aws-types",
- "bytes",
- "hex",
- "http",
- "hyper",
- "ring",
- "tokio",
- "tower",
- "tracing",
- "zeroize",
-]
-
-[[package]]
-name = "aws-endpoint"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06d059b181b25940b751e8efecc173ceb4fe65f45d8975f56b02e98db5c42fd6"
-dependencies = [
- "aws-smithy-http",
- "aws-types",
- "http",
- "regex",
- "tracing",
-]
-
-[[package]]
-name = "aws-http"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3049066e3282c98bbf01e90459a1772ccf6c0b96cd1483c3dd5aa34bef9b9de1"
-dependencies = [
- "aws-smithy-http",
- "aws-smithy-types",
- "aws-types",
- "http",
- "lazy_static",
- "percent-encoding",
- "tracing",
-]
-
-[[package]]
-name = "aws-sdk-s3"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d70be50ac07c3c2b5f37056271856ac00190e80c19c76c58bcbee5be0b63ec9"
-dependencies = [
- "aws-endpoint",
- "aws-http",
- "aws-sig-auth",
- "aws-sigv4",
- "aws-smithy-async",
- "aws-smithy-client",
- "aws-smithy-eventstream",
- "aws-smithy-http",
- "aws-smithy-http-tower",
- "aws-smithy-types",
- "aws-smithy-xml",
- "aws-types",
- "bytes",
- "http",
- "md5",
- "tokio-stream",
- "tower",
-]
-
-[[package]]
-name = "aws-sdk-sso"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "222fcabbf95f1f13c4e28cab95c9a4bb02606f998b1ea2800713b6866be5701d"
-dependencies = [
- "aws-endpoint",
- "aws-http",
- "aws-sig-auth",
- "aws-smithy-async",
- "aws-smithy-client",
- "aws-smithy-http",
- "aws-smithy-http-tower",
- "aws-smithy-json",
- "aws-smithy-types",
- "aws-types",
- "bytes",
- "http",
- "tokio-stream",
- "tower",
-]
-
-[[package]]
-name = "aws-sdk-sts"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d85b9f081af2c73ee25642de1a35fa9ba7b2432e54f6bf42242e478ae53c3beb"
-dependencies = [
- "aws-endpoint",
- "aws-http",
- "aws-sig-auth",
- "aws-smithy-async",
- "aws-smithy-client",
- "aws-smithy-http",
- "aws-smithy-http-tower",
- "aws-smithy-query",
- "aws-smithy-types",
- "aws-smithy-xml",
- "aws-types",
- "bytes",
- "http",
- "tower",
-]
-
-[[package]]
-name = "aws-sig-auth"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4012b5192350b5403aba19a01a5a3b1768158dab936c4269d89760970d4812bc"
-dependencies = [
- "aws-sigv4",
- "aws-smithy-eventstream",
- "aws-smithy-http",
- "aws-types",
- "http",
- "thiserror",
- "tracing",
-]
-
-[[package]]
-name = "aws-sigv4"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec202c431ef1e97987ca984f12333f4b1f7f614ff74a6ec2799015d1cb074a8c"
-dependencies = [
- "aws-smithy-eventstream",
- "aws-smithy-http",
- "bytes",
- "form_urlencoded",
- "hex",
- "http",
- "once_cell",
- "percent-encoding",
- "regex",
- "ring",
- "time 0.3.21",
- "tracing",
-]
-
-[[package]]
-name = "aws-smithy-async"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b69dad0aefb1b64e63e0d3a1310dc50191608d8c9e226f2f241f344a7173642e"
-dependencies = [
- "futures-util",
- "pin-project-lite",
- "tokio",
- "tokio-stream",
-]
-
-[[package]]
-name = "aws-smithy-client"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93e47a8aca2194672518d6630936507d3b54598c482f13ffe53f9b7932724bbb"
-dependencies = [
- "aws-smithy-async",
- "aws-smithy-http",
- "aws-smithy-http-tower",
- "aws-smithy-types",
- "bytes",
- "fastrand",
- "http",
- "http-body",
- "hyper",
- "hyper-rustls 0.22.1",
- "lazy_static",
- "pin-project",
- "pin-project-lite",
- "tokio",
- "tower",
- "tracing",
-]
-
-[[package]]
-name = "aws-smithy-eventstream"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f98bcfcb063d29c7cc7bb0a64830afe606090de75533c10a11a05460d814e8d9"
-dependencies = [
- "aws-smithy-types",
- "bytes",
- "crc32fast",
-]
-
-[[package]]
-name = "aws-smithy-http"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c8bbe92ecdc4e39a612359b09994c45d000591d4951aa7343443f44b47e6696"
-dependencies = [
- "aws-smithy-eventstream",
- "aws-smithy-types",
- "bytes",
- "bytes-utils",
- "futures-core",
- "http",
- "http-body",
- "hyper",
- "percent-encoding",
- "pin-project",
- "tokio",
- "tokio-util 0.6.10",
- "tracing",
-]
-
-[[package]]
-name = "aws-smithy-http-tower"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f23fdf1253855af3bb4abb25e42ad3152a71241af89014eebf27c14c7a59b81d"
-dependencies = [
- "aws-smithy-http",
- "bytes",
- "http",
- "http-body",
- "pin-project",
- "tower",
- "tracing",
-]
-
-[[package]]
-name = "aws-smithy-json"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cc19c372b0a561aa6bfc5dfdd917da7c7b1641d3bc9049ca4d7b197bb616a09"
-dependencies = [
- "aws-smithy-types",
-]
-
-[[package]]
-name = "aws-smithy-query"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8254e49a237e9dc0301a4683c424a825f4220420b241ec4eb51e959a70626d8a"
-dependencies = [
- "aws-smithy-types",
- "urlencoding",
-]
-
-[[package]]
-name = "aws-smithy-types"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cde96306a54777ec8781aa510830e242de614aa5746274713f5ecac0779f644f"
-dependencies = [
- "itoa",
- "num-integer",
- "ryu",
- "time 0.3.21",
-]
-
-[[package]]
-name = "aws-smithy-xml"
-version = "0.36.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3b0466594a86074a6e96b11284f9a9ddc90c5c5b7d6144ab357a90be49d28c4"
-dependencies = [
- "thiserror",
- "xmlparser",
-]
-
-[[package]]
-name = "aws-types"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "433fd128ea727e9b83b34c72c6d4db1b900f067760fa27b387694fe896633142"
-dependencies = [
- "aws-smithy-async",
- "aws-smithy-types",
- "rustc_version",
- "tracing",
- "zeroize",
-]
-
-[[package]]
 name = "axum"
 version = "0.6.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -703,18 +407,12 @@ name = "bin"
 version = "0.3.0"
 dependencies = [
  "anyhow",
- "aws-config",
- "aws-sdk-s3",
  "clap 3.2.25",
  "dotenv",
  "env_logger 0.9.3",
  "ethers-providers 1.0.2",
- "futures",
  "itertools",
- "jsonrpsee",
- "jsonrpsee-core",
  "log",
- "mime_guess",
  "rand 0.8.5",
  "rand_xorshift",
  "reqwest",
@@ -722,8 +420,6 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tokio",
- "tokio-stream",
- "tracing-subscriber 0.3.17",
  "types",
  "utils",
  "zkevm",
@@ -924,7 +620,7 @@ checksum = "a3e2c3daef883ecc1b5d58c15adae93470a91d425f3532ba1695849656af3fc1"
 [[package]]
 name = "bus-mapping"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "eth-types",
  "ethers-core 0.17.0",
@@ -1010,16 +706,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bytes-utils"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e47d3a8076e283f3acd27400535992edb3ba4b5bb72f8891ad8fbe7932a7d4b9"
-dependencies = [
- "bytes",
- "either",
-]
-
-[[package]]
 name = "cc"
 version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1056,7 +742,7 @@ dependencies = [
  "js-sys",
  "num-integer",
  "num-traits",
- "time 0.1.45",
+ "time",
  "wasm-bindgen",
  "winapi",
 ]
@@ -1410,15 +1096,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ct-logs"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1a816186fa68d9e426e3cb4ae4dff1fcd8e4a2c34b781bf7a822574a0d0aac8"
-dependencies = [
- "sct 0.6.1",
-]
-
-[[package]]
 name = "ctr"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1630,7 +1307,7 @@ checksum = "68b0cf012f1230e43cd00ebb729c6bb58707ecfa8ad08b52ef3a4ccd2697fc30"
 [[package]]
 name = "ecc"
 version = "0.1.0"
-source = "git+https://github.com/privacy-scaling-explorations/halo2wrong?tag=v2023_02_02#5905a20b62fcd9f6c269416a39c80de7ced8fb02"
+source = "git+https://github.com/kroma-network/halo2wrong?rev=e6cab5d#e6cab5d0191d02e18bd084e2a398f89461a9e04e"
 dependencies = [
  "group 0.12.1",
  "integer",
@@ -1865,7 +1542,7 @@ dependencies = [
 [[package]]
 name = "eth-types"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "ethers-core 0.17.0",
  "ethers-signers",
@@ -2226,7 +1903,7 @@ dependencies = [
 [[package]]
 name = "external-tracer"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "eth-types",
  "geth-utils",
@@ -2593,7 +2270,7 @@ dependencies = [
 [[package]]
 name = "gadgets"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "digest 0.7.6",
  "eth-types",
@@ -2634,7 +2311,7 @@ dependencies = [
 [[package]]
 name = "geth-utils"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "env_logger 0.9.3",
  "gobuild",
@@ -2819,18 +2496,18 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio",
- "tokio-util 0.7.8",
+ "tokio-util",
  "tracing",
 ]
 
 [[package]]
 name = "halo2-ecc-circuit-lib"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/halo2-snark-aggregator?branch=kroma-dev-0220#bbe1e0ecdbc197a2a95a5fa01d2afec03ed6f337"
+source = "git+https://github.com/kroma-network/halo2-snark-aggregator?rev=2637b51#2637b512397b255525782006439a9cedde5b79b8"
 dependencies = [
  "group 0.12.1",
  "halo2_proofs",
- "halo2curves 0.3.1 (git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde)",
+ "halo2curves",
  "num-bigint",
  "num-integer",
 ]
@@ -2838,7 +2515,7 @@ dependencies = [
 [[package]]
 name = "halo2-mpt-circuits"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/mpt-circuit.git?branch=kroma-dev-0111#e0b9f0c7aae6a8fcb89df630c85a264d0b25f1fd"
+source = "git+https://github.com/kroma-network/mpt-circuit.git?rev=a5a71bf#a5a71bf18d7a5d58183c7d9d4ed0d28792aa85e7"
 dependencies = [
  "halo2_proofs",
  "hex",
@@ -2855,17 +2532,17 @@ dependencies = [
 [[package]]
 name = "halo2-snark-aggregator-api"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/halo2-snark-aggregator?branch=kroma-dev-0220#bbe1e0ecdbc197a2a95a5fa01d2afec03ed6f337"
+source = "git+https://github.com/kroma-network/halo2-snark-aggregator?rev=2637b51#2637b512397b255525782006439a9cedde5b79b8"
 dependencies = [
  "blake2b_simd",
  "chrono",
  "digest 0.10.7",
  "group 0.12.1",
  "halo2_proofs",
- "halo2curves 0.3.1 (git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde)",
+ "halo2curves",
  "log",
  "num-bigint",
- "poseidon 0.2.0 (git+https://github.com/kroma-network/poseidon.git)",
+ "poseidon",
  "rand 0.8.5",
  "rand_pcg",
  "rand_xorshift",
@@ -2874,13 +2551,13 @@ dependencies = [
 [[package]]
 name = "halo2-snark-aggregator-circuit"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/halo2-snark-aggregator?branch=kroma-dev-0220#bbe1e0ecdbc197a2a95a5fa01d2afec03ed6f337"
+source = "git+https://github.com/kroma-network/halo2-snark-aggregator?rev=2637b51#2637b512397b255525782006439a9cedde5b79b8"
 dependencies = [
  "clap 3.2.25",
  "halo2-ecc-circuit-lib",
  "halo2-snark-aggregator-api",
  "halo2_proofs",
- "halo2curves 0.3.1 (git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde)",
+ "halo2curves",
  "log",
  "rand 0.8.5",
  "rand_core 0.6.4",
@@ -2893,13 +2570,13 @@ dependencies = [
 [[package]]
 name = "halo2-snark-aggregator-solidity"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/halo2-snark-aggregator?branch=kroma-dev-0220#bbe1e0ecdbc197a2a95a5fa01d2afec03ed6f337"
+source = "git+https://github.com/kroma-network/halo2-snark-aggregator?rev=2637b51#2637b512397b255525782006439a9cedde5b79b8"
 dependencies = [
  "halo2-ecc-circuit-lib",
  "halo2-snark-aggregator-api",
  "halo2-snark-aggregator-circuit",
  "halo2_proofs",
- "halo2curves 0.3.1 (git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde)",
+ "halo2curves",
  "log",
  "num-bigint",
  "sha3 0.10.8",
@@ -2909,7 +2586,7 @@ dependencies = [
 [[package]]
 name = "halo2_base"
 version = "0.1.0"
-source = "git+https://github.com/scroll-tech/halo2-lib?branch=halo2-ecc-ecdsa-0129#89cf51f0ac452e4814e028b9a331ec613aafa726"
+source = "git+https://github.com/kroma-network/halo2-lib?rev=31e0c62#31e0c6293789e0b1acef158ec260f968e2057416"
 dependencies = [
  "ff 0.12.1",
  "halo2_proofs",
@@ -2921,14 +2598,14 @@ dependencies = [
 [[package]]
 name = "halo2_ecc"
 version = "0.1.0"
-source = "git+https://github.com/scroll-tech/halo2-lib?branch=halo2-ecc-ecdsa-0129#89cf51f0ac452e4814e028b9a331ec613aafa726"
+source = "git+https://github.com/kroma-network/halo2-lib?rev=31e0c62#31e0c6293789e0b1acef158ec260f968e2057416"
 dependencies = [
  "ark-std",
  "ff 0.12.1",
  "group 0.12.1",
  "halo2_base",
  "halo2_proofs",
- "halo2curves 0.3.1 (git+https://github.com/jonathanpwang/halo2curves.git)",
+ "halo2curves",
  "num-bigint",
  "num-integer",
  "num-traits",
@@ -2941,18 +2618,18 @@ dependencies = [
 [[package]]
 name = "halo2_proofs"
 version = "0.2.0"
-source = "git+https://github.com/kroma-network/halo2.git?branch=kroma-v0.3.0#895726e2a2910db149af2bb595255e6b1dbad7fb"
+source = "git+https://github.com/kroma-network/halo2.git?rev=9922fbb#9922fbb853201d8ad9feb82bd830a031d7c290b1"
 dependencies = [
  "ark-std",
  "blake2b_simd",
  "cfg-if 0.1.10",
  "ff 0.12.1",
  "group 0.12.1",
- "halo2curves 0.3.1 (git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde)",
+ "halo2curves",
  "log",
  "num-bigint",
  "num-integer",
- "poseidon 0.2.0 (git+https://github.com/kroma-network/poseidon.git?branch=kroma-dev-0220)",
+ "poseidon",
  "rand_core 0.6.4",
  "rayon",
  "sha3 0.9.1",
@@ -2962,25 +2639,8 @@ dependencies = [
 
 [[package]]
 name = "halo2curves"
-version = "0.2.1"
-source = "git+https://github.com/privacy-scaling-explorations/halo2curves?tag=0.3.0#83c72d49762343ffc9576ca11a2aa615efe1029b"
-dependencies = [
- "ff 0.12.1",
- "group 0.12.1",
- "lazy_static",
- "num-bigint",
- "num-traits",
- "pasta_curves",
- "rand 0.8.5",
- "rand_core 0.6.4",
- "static_assertions",
- "subtle",
-]
-
-[[package]]
-name = "halo2curves"
 version = "0.3.1"
-source = "git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde#c0ac1935e5da2a620204b5b011be2c924b1e0155"
+source = "git+https://github.com/kroma-network/halo2curves?rev=c0ac193#c0ac1935e5da2a620204b5b011be2c924b1e0155"
 dependencies = [
  "ff 0.12.1",
  "group 0.12.1",
@@ -2997,26 +2657,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "halo2curves"
-version = "0.3.1"
-source = "git+https://github.com/jonathanpwang/halo2curves.git#a6437dbe92fe3fd347674ab32cc0909c605a4f89"
-dependencies = [
- "ff 0.12.1",
- "group 0.12.1",
- "lazy_static",
- "num-bigint",
- "num-traits",
- "pasta_curves",
- "rand 0.8.5",
- "rand_core 0.6.4",
- "static_assertions",
- "subtle",
-]
-
-[[package]]
 name = "halo2wrong"
 version = "0.1.0"
-source = "git+https://github.com/privacy-scaling-explorations/halo2wrong?tag=v2023_02_02#5905a20b62fcd9f6c269416a39c80de7ced8fb02"
+source = "git+https://github.com/kroma-network/halo2wrong?rev=e6cab5d#e6cab5d0191d02e18bd084e2a398f89461a9e04e"
 dependencies = [
  "group 0.12.1",
  "halo2_proofs",
@@ -3224,23 +2867,6 @@ dependencies = [
 
 [[package]]
 name = "hyper-rustls"
-version = "0.22.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f9f7a97316d44c0af9b0301e65010573a853a9fc97046d7331d7f6bc0fd5a64"
-dependencies = [
- "ct-logs",
- "futures-util",
- "hyper",
- "log",
- "rustls 0.19.1",
- "rustls-native-certs 0.5.0",
- "tokio",
- "tokio-rustls 0.22.0",
- "webpki 0.21.4",
-]
-
-[[package]]
-name = "hyper-rustls"
 version = "0.23.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1788965e61b367cd03a62950836d5cd41560c3577d90e40e0819373194d1661c"
@@ -3249,7 +2875,7 @@ dependencies = [
  "hyper",
  "log",
  "rustls 0.20.8",
- "rustls-native-certs 0.6.2",
+ "rustls-native-certs",
  "tokio",
  "tokio-rustls 0.23.4",
  "webpki-roots",
@@ -3409,7 +3035,7 @@ dependencies = [
 [[package]]
 name = "integer"
 version = "0.1.0"
-source = "git+https://github.com/privacy-scaling-explorations/halo2wrong?tag=v2023_02_02#5905a20b62fcd9f6c269416a39c80de7ced8fb02"
+source = "git+https://github.com/kroma-network/halo2wrong?rev=e6cab5d#e6cab5d0191d02e18bd084e2a398f89461a9e04e"
 dependencies = [
  "group 0.12.1",
  "maingate",
@@ -3535,12 +3161,12 @@ dependencies = [
  "jsonrpsee-core",
  "jsonrpsee-types",
  "pin-project",
- "rustls-native-certs 0.6.2",
+ "rustls-native-certs",
  "soketto",
  "thiserror",
  "tokio",
  "tokio-rustls 0.23.4",
- "tokio-util 0.7.8",
+ "tokio-util",
  "tracing",
  "webpki-roots",
 ]
@@ -3623,7 +3249,7 @@ dependencies = [
  "soketto",
  "tokio",
  "tokio-stream",
- "tokio-util 0.7.8",
+ "tokio-util",
  "tower",
  "tracing",
 ]
@@ -3703,7 +3329,7 @@ dependencies = [
 [[package]]
 name = "keccak256"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "env_logger 0.9.3",
  "eth-types",
@@ -3833,7 +3459,7 @@ dependencies = [
 [[package]]
 name = "maingate"
 version = "0.1.0"
-source = "git+https://github.com/privacy-scaling-explorations/halo2wrong?tag=v2023_02_02#5905a20b62fcd9f6c269416a39c80de7ced8fb02"
+source = "git+https://github.com/kroma-network/halo2wrong?rev=e6cab5d#e6cab5d0191d02e18bd084e2a398f89461a9e04e"
 dependencies = [
  "group 0.12.1",
  "halo2wrong",
@@ -3854,25 +3480,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "matchers"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8263075bb86c5a1b1427b5ae862e8889656f126e9f77c484496e8b47cf5c5558"
-dependencies = [
- "regex-automata",
-]
-
-[[package]]
 name = "matchit"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b87248edafb776e59e6ee64a79086f65890d3510f2c656c000bf2a7e8a0aea40"
-
-[[package]]
-name = "md5"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
 
 [[package]]
 name = "memchr"
@@ -3932,16 +3543,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
-name = "mime_guess"
-version = "2.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4192263c238a5f0d0c6bfd21f336a313a4ce1c450542449ca191bb657b4642ef"
-dependencies = [
- "mime",
- "unicase",
-]
-
-[[package]]
 name = "miniz_oxide"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3974,7 +3575,7 @@ dependencies = [
 [[package]]
 name = "mock"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "eth-types",
  "ethers-core 0.17.0",
@@ -3984,12 +3585,13 @@ dependencies = [
  "lazy_static",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
+ "serde_json",
 ]
 
 [[package]]
 name = "mpt-zktrie"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "bus-mapping",
  "eth-types",
@@ -4012,16 +3614,6 @@ name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
-
-[[package]]
-name = "nu-ansi-term"
-version = "0.46.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77a8165726e8236064dbb45459242600304b42a5ea24ee2948e18e023bf7ba84"
-dependencies = [
- "overload",
- "winapi",
-]
 
 [[package]]
 name = "num"
@@ -4186,12 +3778,6 @@ name = "os_str_bytes"
 version = "6.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ceedf44fb00f2d1984b0bc98102627ce622e083e49a5bacdb3e514fa4238e267"
-
-[[package]]
-name = "overload"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "pallet-evm-precompile-blake2"
@@ -4566,37 +4152,17 @@ dependencies = [
 [[package]]
 name = "poseidon"
 version = "0.2.0"
-source = "git+https://github.com/privacy-scaling-explorations/poseidon.git?tag=v2022_10_22#5d29df01a95e3df6334080d28e983407f56b5da3"
+source = "git+https://github.com/kroma-network/poseidon.git?rev=00a2fe0#00a2fe049208860a5835b1f24d2a80105439b995"
 dependencies = [
  "group 0.12.1",
- "halo2curves 0.2.1",
- "subtle",
-]
-
-[[package]]
-name = "poseidon"
-version = "0.2.0"
-source = "git+https://github.com/kroma-network/poseidon.git?branch=kroma-dev-0220#834f80bcfe85945d7800074645ff055d4d1d97e9"
-dependencies = [
- "group 0.12.1",
- "halo2curves 0.3.1 (git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde)",
- "subtle",
-]
-
-[[package]]
-name = "poseidon"
-version = "0.2.0"
-source = "git+https://github.com/kroma-network/poseidon.git#834f80bcfe85945d7800074645ff055d4d1d97e9"
-dependencies = [
- "group 0.12.1",
- "halo2curves 0.3.1 (git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde)",
+ "halo2curves",
  "subtle",
 ]
 
 [[package]]
 name = "poseidon-circuit"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/poseidon-circuit.git?branch=kroma-dev-0215#98a97d2d57508769e8bbfc1f32bf15395427296d"
+source = "git+https://github.com/kroma-network/poseidon-circuit.git?rev=693e985#693e985a48029d89dab84af37445179b5bbd88d2"
 dependencies = [
  "bitvec 1.0.1",
  "halo2_proofs",
@@ -4810,7 +4376,6 @@ dependencies = [
  "signal-hook",
  "thiserror",
  "tokio",
- "tokio-test",
  "tonic",
  "tonic-build",
  "types",
@@ -5281,27 +4846,14 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.19.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35edb675feee39aec9c99fa5ff985081995a06d594114ae14cbe797ad7b7a6d7"
-dependencies = [
- "base64 0.13.1",
- "log",
- "ring",
- "sct 0.6.1",
- "webpki 0.21.4",
-]
-
-[[package]]
-name = "rustls"
 version = "0.20.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fff78fc74d175294f4e83b28343315ffcfb114b156f0185e9741cb5570f50e2f"
 dependencies = [
  "log",
  "ring",
- "sct 0.7.0",
- "webpki 0.22.0",
+ "sct",
+ "webpki",
 ]
 
 [[package]]
@@ -5313,19 +4865,7 @@ dependencies = [
  "log",
  "ring",
  "rustls-webpki",
- "sct 0.7.0",
-]
-
-[[package]]
-name = "rustls-native-certs"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a07b7c1885bd8ed3831c289b7870b13ef46fe0e856d288c30d9cc17d75a2092"
-dependencies = [
- "openssl-probe",
- "rustls 0.19.1",
- "schannel",
- "security-framework",
+ "sct",
 ]
 
 [[package]]
@@ -5470,16 +5010,6 @@ dependencies = [
  "pbkdf2 0.10.1",
  "salsa20",
  "sha2 0.10.6",
-]
-
-[[package]]
-name = "sct"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b362b83898e0e69f38515b82ee15aa80636befe47c3b6d3d89a911e78fc228ce"
-dependencies = [
- "ring",
- "untrusted",
 ]
 
 [[package]]
@@ -5851,18 +5381,18 @@ checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
 [[package]]
 name = "snark-verifier"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/snark-verifier?branch=kroma-dev-0202#3647bd2833a0dc69b44ed0094898687971a7bddc"
+source = "git+https://github.com/kroma-network/snark-verifier?rev=738e42#738e4260706508760e1c1dcb5b531ad55803d7f2"
 dependencies = [
  "ecc",
  "halo2_proofs",
- "halo2curves 0.3.1 (git+https://github.com/kroma-network/halo2curves?branch=kroma-0.3.1-derive-serde)",
+ "halo2curves",
  "hex",
  "itertools",
  "lazy_static",
  "num-bigint",
  "num-integer",
  "num-traits",
- "poseidon 0.2.0 (git+https://github.com/privacy-scaling-explorations/poseidon.git?tag=v2022_10_22)",
+ "poseidon",
  "rand 0.8.5",
 ]
 
@@ -6230,7 +5760,7 @@ dependencies = [
  "sp-std",
  "tracing",
  "tracing-core",
- "tracing-subscriber 0.2.25",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -6559,32 +6089,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "time"
-version = "0.3.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f3403384eaacbca9923fa06940178ac13e4edb725486d70e8e15881d0c836cc"
-dependencies = [
- "serde",
- "time-core",
- "time-macros",
-]
-
-[[package]]
-name = "time-core"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7300fbefb4dadc1af235a9cef3737cea692a9d97e1b9cbcd4ebdae6f8868e6fb"
-
-[[package]]
-name = "time-macros"
-version = "0.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "372950940a5f07bf38dbe211d7283c9e6d7327df53794992d293e534c733d09b"
-dependencies = [
- "time-core",
-]
-
-[[package]]
 name = "tiny-bip39"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6669,24 +6173,13 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc6844de72e57df1980054b38be3a9f4702aba4858be64dd700181a8a6d0e1b6"
-dependencies = [
- "rustls 0.19.1",
- "tokio",
- "webpki 0.21.4",
-]
-
-[[package]]
-name = "tokio-rustls"
 version = "0.23.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c43ee83903113e03984cb9e5cebe6c04a5116269e900e3ddba8f068a62adda59"
 dependencies = [
  "rustls 0.20.8",
  "tokio",
- "webpki 0.22.0",
+ "webpki",
 ]
 
 [[package]]
@@ -6711,19 +6204,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tokio-test"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53474327ae5e166530d17f2d956afcb4f8a004de581b3cae10f12006bc8163e3"
-dependencies = [
- "async-stream",
- "bytes",
- "futures-core",
- "tokio",
- "tokio-stream",
-]
-
-[[package]]
 name = "tokio-tungstenite"
 version = "0.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6735,22 +6215,8 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.23.4",
  "tungstenite",
- "webpki 0.22.0",
+ "webpki",
  "webpki-roots",
-]
-
-[[package]]
-name = "tokio-util"
-version = "0.6.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36943ee01a6d67977dd3f84a5a1d2efeb4ada3a1ae771cadfaa535d9d9fc6507"
-dependencies = [
- "bytes",
- "futures-core",
- "futures-sink",
- "log",
- "pin-project-lite",
- "tokio",
 ]
 
 [[package]]
@@ -6818,7 +6284,7 @@ dependencies = [
  "prost-derive",
  "tokio",
  "tokio-stream",
- "tokio-util 0.7.8",
+ "tokio-util",
  "tower",
  "tower-layer",
  "tower-service",
@@ -6853,7 +6319,7 @@ dependencies = [
  "rand 0.8.5",
  "slab",
  "tokio",
- "tokio-util 0.7.8",
+ "tokio-util",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -6945,7 +6411,7 @@ dependencies = [
  "ansi_term",
  "chrono",
  "lazy_static",
- "matchers 0.0.1",
+ "matchers",
  "regex",
  "serde",
  "serde_json",
@@ -6956,24 +6422,6 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
-]
-
-[[package]]
-name = "tracing-subscriber"
-version = "0.3.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30a651bc37f915e81f087d86e62a18eec5f79550c7faff886f7090b4ea757c77"
-dependencies = [
- "matchers 0.1.0",
- "nu-ansi-term",
- "once_cell",
- "regex",
- "sharded-slab",
- "smallvec",
- "thread_local",
- "tracing",
- "tracing-core",
- "tracing-log",
 ]
 
 [[package]]
@@ -7038,7 +6486,7 @@ dependencies = [
  "thiserror",
  "url",
  "utf-8",
- "webpki 0.22.0",
+ "webpki",
 ]
 
 [[package]]
@@ -7151,15 +6599,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "unicase"
-version = "2.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50f37be617794602aabbeee0be4f259dc1778fabe05e2d67ee8f79326d5cb4f6"
-dependencies = [
- "version_check",
-]
-
-[[package]]
 name = "unicode-bidi"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7202,12 +6641,6 @@ dependencies = [
  "idna",
  "percent-encoding",
 ]
-
-[[package]]
-name = "urlencoding"
-version = "1.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a1f0175e03a0973cf4afd476bef05c26e228520400eb1fd473ad417b1c00ffb"
 
 [[package]]
 name = "utf-8"
@@ -7562,16 +6995,6 @@ dependencies = [
 
 [[package]]
 name = "webpki"
-version = "0.21.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8e38c0608262c46d4a56202ebabdeb094cef7e560ca7a226c6bf055188aa4ea"
-dependencies = [
- "ring",
- "untrusted",
-]
-
-[[package]]
-name = "webpki"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f095d78192e208183081cc07bc5515ef55216397af48b873e5edcd72637fa1bd"
@@ -7586,7 +7009,7 @@ version = "0.22.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c71e40d7d2c34a5106301fb632274ca37242cd0c9d3e64dbece371a40a2d87"
 dependencies = [
- "webpki 0.22.0",
+ "webpki",
 ]
 
 [[package]]
@@ -7834,12 +7257,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xmlparser"
-version = "0.13.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "114ba2b24d2167ef6d67d7d04c8cc86522b87f490025f39f0303b7db5bf5e3d8"
-
-[[package]]
 name = "zeroize"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7900,7 +7317,7 @@ dependencies = [
 [[package]]
 name = "zkevm-circuits"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=17094d6#17094d6d1553f29a401ff7e9d45f0980d183bc01"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=9f9b59a#9f9b59a74fcd6e66eea4d96857f9e2da22e2b35d"
 dependencies = [
  "array-init",
  "bus-mapping",
@@ -7938,7 +7355,7 @@ dependencies = [
 [[package]]
 name = "zktrie"
 version = "0.1.2"
-source = "git+https://github.com/kroma-network/zktrie.git?branch=build/update-cargo-toml#aedd8530b4f8471186c9b30c12f6a75110e0c454"
+source = "git+https://github.com/kroma-network/zktrie.git?rev=b0f3ee9#b0f3ee937287a115ea44f0c188df27e4cd29dfa0"
 dependencies = [
  "gobuild",
 ]
