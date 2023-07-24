@@ -4,7 +4,7 @@ pub mod utils;
 
 use crate::prove::{create_proof, ProofResult};
 use crate::spec::ProofType;
-use crate::utils::{kroma_err, kroma_msg};
+use crate::utils::{kroma_err, kroma_info, kroma_msg};
 use clap::Parser;
 use jsonrpc_derive::rpc;
 use jsonrpc_http_server::jsonrpc_core::{ErrorCode, Result};
@@ -17,17 +17,6 @@ const KROMA_CHAIN_ID: u32 = 901;
 #[rpc]
 pub trait Rpc {
     #[rpc(name = "spec")]
-    /// return the prover's specification as JSON String.
-    fn spec(&self) -> Result<String>;
-
-    #[rpc(name = "prove")]
-    /// return proof related to the trace.
-    fn prove(&self, trace: String, proof_type: i32) -> Result<ProofResult>;
-}
-
-pub struct RpcImpl;
-
-impl Rpc for RpcImpl {
     /// return the prover's specification as JSON String.
     ///
     /// # Returns
@@ -43,6 +32,14 @@ impl Rpc for RpcImpl {
         Ok(serde_json::to_string(&spec).unwrap())
     }
 
+    #[rpc(name = "prove")]
+    /// return proof related to the trace.
+    fn prove(&self, trace: String, proof_type: i32) -> Result<ProofResult>;
+}
+
+pub struct RpcImpl;
+
+impl Rpc for RpcImpl {
     /// return zk-proof generated with the trace as an input.
     ///
     /// # Arguments
@@ -73,6 +70,16 @@ impl Rpc for RpcImpl {
     }
 }
 
+pub struct MockRpcImpl;
+
+impl Rpc for MockRpcImpl {
+    /// Regardless of the received trace, it returns a zero proof.
+    fn prove(&self, _trace: String, _proof_type: i32) -> Result<ProofResult> {
+        kroma_info("return zero proof");
+        Ok(ProofResult::new(vec![0; 128], Some(vec![0; 4640])))
+    }
+}
+
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -88,7 +95,10 @@ fn main() {
     let endpoint = args.endpoint.unwrap_or("127.0.0.1:3030".to_string());
 
     let mut io = jsonrpc_core::IoHandler::new();
+    #[cfg(not(feature = "mock-server"))]
     io.extend_with(RpcImpl.to_delegate());
+    #[cfg(feature = "mock-server")]
+    io.extend_with(MockRpcImpl.to_delegate());
 
     kroma_msg(format!("Prover server running on {endpoint}"));
     let server = ServerBuilder::new(io)

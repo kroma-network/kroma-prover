@@ -42,3 +42,6 @@ path = "src/server_main.rs"
 [[bin]]
 name = "mock-client"
 path = "src/mock_client.rs"
+
+[features]
+mock-server = []

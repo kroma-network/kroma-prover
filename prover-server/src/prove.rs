@@ -27,7 +27,7 @@ pub struct ProofResult {
 }
 
 impl ProofResult {
-    fn new(proof: Vec<u8>, final_pair: Option<Vec<u8>>) -> Self {
+    pub fn new(proof: Vec<u8>, final_pair: Option<Vec<u8>>) -> Self {
         Self { proof, final_pair }
     }
 }
