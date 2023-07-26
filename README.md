@@ -7,52 +7,39 @@ This [Prover](https://github.com/kroma-network/kroma/blob/dev/specs/zkevm-prover
 
 - Rust(rustc 1.68.0-nightly)
 - Golang (go1.20.3)
-- ProtoBuf (libprotoc 3.21.12)
-
-## Setup
-
-```shell
-> git clone https://github.com/kroma-network/kroma-prover.git
-> cd kroma-prover
-> git submodule update --init
-```
 
 ## Kroma Prover Binary
 
-Prover server (entry: prover-grpc/src/prover_server.rs)
+Prover server (entry: prover-server/src/server_main.rs)
 
 ```shell
 # build
 > cargo build --release --bin prover-server
 
 # run
-> ./target/release/prover-sever --config <config-file-path>
+> ./target/release/prover-server --endpoint "127.0.0.1:3030"
 ```
 
-Mock client for test (entry: prover-grpc/src/client_mock.rs)
+Mock Prover server (which always return zero proof for test)
 
 ```shell
 # build
-> cargo build --release --bin client-mock
+> cargo build --release --bin prover-server --features mock-server
+
+# run
+> ./target/release/prover-server --endpoint "127.0.0.1:3030"
+```
+
+Mock client for test (entry: prover-grpc/src/mock_client.rs)
+
+```shell
+# build
+> cargo build --release --bin mock-client
 
 # run with proof type: EVM(1), STATE(2), SUPER(3), AGG(4)
 > ./target/release/client-mock --prove <proof_type_int>
 # or
 > ./target/release/client-mock --spec true
-```
-
-config file template for launching prover-server (config.json)
-
-```json
-{
-  "grpc_port": "<prover's-port-as-integer>",
-  "grpc_ip": "<prover's-ip-as-string>",
-  "params_dir": "<directory-of-KZG-params>",
-  "seed_path": "<seed-file-path-to-used-for-prover's-rng>",
-  "proof_out_dir": "<directory-for-proof-as-output>",
-  "l2_rpc_endpoint": "<rpc-endpoint-of-kroma-geth>",
-  "verifier_name": "<verifier-sol-file-name>"
-}
 ```
 
 ## Legacy Binaries

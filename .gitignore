@@ -19,3 +19,4 @@ zkevm/tests/traces/bridge/*.proof
 *.log
 
 test_params
+out_proof
