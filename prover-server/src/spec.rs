@@ -51,7 +51,7 @@ impl ProofType {
     }
 
     /// returns enum-value mapping as a String.
-    pub fn desc() -> String {
+    pub fn desc() -> HashMap<String, i32> {
         let mut mapping = HashMap::new();
         let proof_type_vec = all::<ProofType>().collect::<Vec<_>>();
         for i in proof_type_vec {
@@ -59,13 +59,13 @@ impl ProofType {
             let value = i.to_value();
             mapping.insert(key, value);
         }
-        serde_json::to_string(&mapping).unwrap()
+        mapping
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ZkSpec {
-    pub proof_type_desc: String,
+    pub proof_type_desc: HashMap<String, i32>,
     pub degree: u32,
     pub agg_degree: u32,
     pub chain_id: u32,

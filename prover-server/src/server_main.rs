@@ -4,7 +4,7 @@ pub mod utils;
 
 use crate::prove::{create_proof, ProofResult};
 use crate::spec::ProofType;
-use crate::utils::{kroma_err, kroma_info, kroma_msg};
+use crate::utils::{kroma_err, kroma_info};
 use clap::Parser;
 use jsonrpc_derive::rpc;
 use jsonrpc_http_server::jsonrpc_core::{ErrorCode, Result};
@@ -27,9 +27,9 @@ pub trait Rpc {
     /// 3. pub chain_id: u32,
     /// 4. pub max_txs: u32,
     /// 5. pub max_call_data: u32,
-    fn spec(&self) -> Result<String> {
+    fn spec(&self) -> Result<ZkSpec> {
         let spec = ZkSpec::new(KROMA_CHAIN_ID);
-        Ok(serde_json::to_string(&spec).unwrap())
+        Ok(spec)
     }
 
     #[rpc(name = "prove")]
@@ -100,7 +100,7 @@ fn main() {
     #[cfg(feature = "mock-server")]
     io.extend_with(MockRpcImpl.to_delegate());
 
-    kroma_msg(format!("Prover server running on {endpoint}"));
+    kroma_info(format!("Prover server starting on {endpoint}"));
     let server = ServerBuilder::new(io)
         .threads(3)
         .start_http(&endpoint.parse().unwrap())
