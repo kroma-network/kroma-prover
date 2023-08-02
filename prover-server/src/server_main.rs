@@ -27,9 +27,9 @@ pub trait Rpc {
     /// 3. pub chain_id: u32,
     /// 4. pub max_txs: u32,
     /// 5. pub max_call_data: u32,
-    fn spec(&self) -> Result<String> {
+    fn spec(&self) -> Result<ZkSpec> {
         let spec = ZkSpec::new(KROMA_CHAIN_ID);
-        Ok(serde_json::to_string(&spec).unwrap())
+        Ok(spec)
     }
 
     #[rpc(name = "prove")]
