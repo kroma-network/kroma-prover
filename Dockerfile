@@ -1,6 +1,7 @@
-# Build common-rs
-FROM scrolltech/rust-builder:nightly-2022-08-23 as builder
-
-RUN mkdir -p /root/src
-ADD . /root/src
-RUN cd /root/src && cargo build --release
+FROM ubuntu:latest
+WORKDIR /app
+COPY ./target/release/prover-server .
+COPY ./libzktrie.so .
+ENV LD_LIBRARY_PATH=/app/libzktrie.so:
+EXPOSE 3030
+CMD ["/bin/sh","-c","./prover-server"]

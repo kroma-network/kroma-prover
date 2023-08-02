@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Linux on ${{ matrix.rust }}
+    runs-on:
+      group: kroma-runners
+      labels: kroma-ubuntu-latest-8core
+    strategy:
+      matrix:
+        arch: [amd64]
+        rust: ["1.68.0"]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Prepare
+        id: prepare
+        run: |
+          if [[ $GITHUB_REF_TYPE == 'branch' ]];
+          then
+            echo "docker-tag=dev-$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+          else
+            echo "docker-tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '>=1.20.0'
+
+      - name: Install Rust
+        run: curl https://sh.rustup.rs -sSfy | sh
+
+      - name: Add Rust to PATH
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $HOME/.bashrc
+          rustc --version
+
+      - name: Verify Rust installation
+        run: rustc --version
+
+      - name: Run cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --bin prover-server
+
+      - name: Prepare libzktrie
+        run: |
+          cp `find ./target/release | grep libzktrie.so` .
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_ACCESS_TOKEN_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN_SECRET }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Publish kroma Prover
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/arm64,linux/amd64
+          push: true
+          tags: kromanetwork/prover:${{ steps.prepare.outputs.docker-tag }},kromanetwork/prover:latest
