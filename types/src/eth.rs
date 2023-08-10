@@ -1,6 +1,6 @@
 use eth_types::evm_types::{Gas, GasCost, OpcodeId, ProgramCounter, Stack, Storage};
 use eth_types::geth_types::DEPOSIT_TX_TYPE;
-use eth_types::{Block, GethExecStep, GethExecTrace, Hash, Transaction, Word, H256};
+use eth_types::{AccessList, Block, GethExecStep, GethExecTrace, Hash, Transaction, Word, H256};
 use ethers_core::types::{Address, Bytes, U256, U64};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
@@ -76,6 +76,8 @@ pub struct TransactionTrace {
     pub mint: Option<U256>,
     #[serde(rename = "sourceHash")]
     pub source_hash: Option<H256>,
+    #[serde(rename = "accessList")]
+    pub access_list: Option<AccessList>,
 }
 
 impl TransactionTrace {
@@ -101,7 +103,7 @@ impl TransactionTrace {
             r: self.r,
             s: self.s,
             transaction_type: Some(U64::from(self.type_)),
-            access_list: None,
+            access_list: self.access_list.clone(),
             max_priority_fee_per_gas: None,
             max_fee_per_gas: None,
             chain_id: Some(self.chain_id),

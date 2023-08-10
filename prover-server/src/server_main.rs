@@ -76,7 +76,7 @@ impl Rpc for MockRpcImpl {
     /// Regardless of the received trace, it returns a zero proof.
     fn prove(&self, _trace: String, _proof_type: i32) -> Result<ProofResult> {
         kroma_info("return zero proof");
-        Ok(ProofResult::new(vec![0; 128], Some(vec![0; 4640])))
+        Ok(ProofResult::new(vec![0; 4640], Some(vec![0; 128])))
     }
 }
 
