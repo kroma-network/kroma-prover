@@ -7,12 +7,11 @@ use crate::spec::ProofType;
 use crate::utils::{kroma_err, kroma_info};
 use clap::Parser;
 use jsonrpc_derive::rpc;
-use jsonrpc_http_server::jsonrpc_core::{ErrorCode, Result};
+use jsonrpc_http_server::jsonrpc_core::Result;
 use jsonrpc_http_server::ServerBuilder;
 use spec::ZkSpec;
 use types::eth::BlockTrace;
-
-const KROMA_CHAIN_ID: u32 = 901;
+use zkevm::circuit::{CHAIN_ID, MAX_TXS};
 
 #[rpc]
 pub trait Rpc {
@@ -28,7 +27,7 @@ pub trait Rpc {
     /// 4. pub max_txs: u32,
     /// 5. pub max_call_data: u32,
     fn spec(&self) -> Result<ZkSpec> {
-        let spec = ZkSpec::new(KROMA_CHAIN_ID);
+        let spec = ZkSpec::new(*CHAIN_ID as u32);
         Ok(spec)
     }
 
@@ -48,21 +47,50 @@ impl Rpc for RpcImpl {
     ///
     /// # Returns
     /// ProofResult instance which includes proof and final pair.
-    fn prove(&self, trace: String, proof_type: i32) -> Result<ProofResult> {
+    fn prove(&self, trace: String, proof_type_val: i32) -> Result<ProofResult> {
+        // initiate ProofType
+        let proof_type = ProofType::from_value(proof_type_val);
+        if let ProofType::None = proof_type {
+            let msg = format!(
+                "invalid prove param: expected param from 1 to 4, but {:?}",
+                proof_type_val
+            );
+            kroma_err(&msg);
+            let err = jsonrpc_core::Error::invalid_params(msg);
+            return Err(err);
+        }
+
         // initiate BlockTrace
         let block_trace: BlockTrace = match serde_json::from_slice(trace.as_bytes()) {
             Ok(trace) => trace,
             Err(_) => {
                 kroma_err("invalid block trace.");
-                let err = jsonrpc_core::Error::new(ErrorCode::InvalidParams);
+                let err = jsonrpc_core::Error::invalid_params("invalid format trace");
                 return Err(err);
             }
         };
 
-        // initiate ProofType
-        let proof_type = ProofType::from_value(proof_type);
-        if let ProofType::None = proof_type {
-            let err = jsonrpc_core::Error::new(ErrorCode::InvalidParams);
+        // check number of txs in the trace
+        let tx_count = block_trace.transactions.len();
+        if tx_count > MAX_TXS {
+            let msg = format!(
+                "too many transactions. MAX_TXS: {}, given transactions: {}",
+                MAX_TXS, tx_count
+            );
+            kroma_err(&msg);
+            let err = jsonrpc_core::Error::invalid_params(msg);
+            return Err(err);
+        }
+
+        // check chain id
+        let trace_chain_id = block_trace.chain_id;
+        if *CHAIN_ID != trace_chain_id.as_u64() {
+            let msg = format!(
+                "not matched chain ids: expected({:?}), requested({:?})",
+                *CHAIN_ID, trace_chain_id
+            );
+            kroma_err(&msg);
+            let err = jsonrpc_core::Error::invalid_params(msg);
             return Err(err);
         }
 
