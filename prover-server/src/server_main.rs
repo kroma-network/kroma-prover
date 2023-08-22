@@ -131,6 +131,7 @@ fn main() {
     kroma_info(format!("Prover server starting on {endpoint}"));
     let server = ServerBuilder::new(io)
         .threads(3)
+        .max_request_body_size(32_000_000)
         .start_http(&endpoint.parse().unwrap())
         .unwrap();
 
