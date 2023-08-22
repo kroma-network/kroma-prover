@@ -36,13 +36,13 @@ const MAX_EXP_STEPS: usize = 10_000;
 */
 
 ////// params for degree = 20 ////////////
-pub static DEGREE: Lazy<usize> = Lazy::new(|| read_env_var("DEGREE", 20));
-pub const MAX_TXS: usize = 25;
+pub static DEGREE: Lazy<usize> = Lazy::new(|| read_env_var("DEGREE", 21));
+pub const MAX_TXS: usize = 100;
 const MAX_INNER_BLOCKS: usize = 1;
-pub const MAX_CALLDATA: usize = 400_000;
-const MAX_RWS: usize = 1_000_000;
-const MAX_KECCAK_ROWS: usize = 524_000;
-const MAX_EXP_STEPS: usize = 10_000;
+pub const MAX_CALLDATA: usize = 2_000_000;
+const MAX_RWS: usize = 2_000_000;
+const MAX_KECCAK_ROWS: usize = 1_000_000;
+const MAX_EXP_STEPS: usize = 100_000;
 
 pub static CHAIN_ID: Lazy<u64> = Lazy::new(|| read_env_var("CHAIN_ID", 2357));
 pub static AGG_DEGREE: Lazy<usize> = Lazy::new(|| read_env_var("AGG_DEGREE", 26));
