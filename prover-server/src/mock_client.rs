@@ -50,8 +50,7 @@ async fn test_request_proof(cli: HttpClient, proof_type: ProofType) -> bool {
 async fn test_request_spec(cli: HttpClient) -> bool {
     kroma_info("Send 'spec' request to prover-server");
     let params = rpc_params![];
-    let response: String = cli.request("spec", params).await.unwrap();
-    let zk_spec: ZkSpec = serde_json::from_str(&response).unwrap();
+    let zk_spec: ZkSpec = cli.request("spec", params).await.unwrap();
 
     kroma_info(format!(
         "Got: \
