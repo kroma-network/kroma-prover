@@ -8,7 +8,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use utils::Measurer;
 use zkevm::{
-    circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
+    circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE, MAX_TXS},
     io::write_file,
     prover::Prover,
     utils::{get_block_trace_from_file, load_or_create_params, load_or_create_seed},
@@ -78,6 +78,16 @@ fn main() {
     // Generating proofs for each trace
     let mut outer_timer = Measurer::new();
     for (trace_name, trace) in traces {
+        let tx_count = trace.transactions.len();
+        if tx_count > MAX_TXS {
+            panic!(
+                "{}",
+                format!(
+                    "too many transactions. MAX_TXS: {}, given transactions: {}",
+                    MAX_TXS, tx_count
+                )
+            );
+        }
         let mut out_dir = PathBuf::from(&trace_name);
         fs::create_dir_all(&out_dir).unwrap();
 
