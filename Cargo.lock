@@ -553,7 +553,7 @@ checksum = "a3e2c3daef883ecc1b5d58c15adae93470a91d425f3532ba1695849656af3fc1"
 [[package]]
 name = "bus-mapping"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "eth-types",
  "ethers-core 0.17.0",
@@ -1483,7 +1483,7 @@ dependencies = [
 [[package]]
 name = "eth-types"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "ethers-core 0.17.0",
  "ethers-signers",
@@ -1844,7 +1844,7 @@ dependencies = [
 [[package]]
 name = "external-tracer"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "eth-types",
  "geth-utils",
@@ -2203,7 +2203,7 @@ dependencies = [
 [[package]]
 name = "gadgets"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "digest 0.7.6",
  "eth-types",
@@ -2244,7 +2244,7 @@ dependencies = [
 [[package]]
 name = "geth-utils"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "env_logger 0.9.3",
  "gobuild",
@@ -3363,7 +3363,7 @@ dependencies = [
 [[package]]
 name = "keccak256"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "env_logger 0.9.3",
  "eth-types",
@@ -3609,7 +3609,7 @@ dependencies = [
 [[package]]
 name = "mock"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "eth-types",
  "ethers-core 0.17.0",
@@ -3625,7 +3625,7 @@ dependencies = [
 [[package]]
 name = "mpt-zktrie"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "bus-mapping",
  "eth-types",
@@ -7208,7 +7208,7 @@ dependencies = [
 [[package]]
 name = "zkevm-circuits"
 version = "0.1.0"
-source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=7da6a81#7da6a81c765367b254230d911a3bd1e7103cb7a4"
+source = "git+https://github.com/kroma-network/zkevm-circuits.git?rev=6ef08f5#6ef08f5df6291999bacc523d608f91d80d199d43"
 dependencies = [
  "array-init",
  "bus-mapping",
