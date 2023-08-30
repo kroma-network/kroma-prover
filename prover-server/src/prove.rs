@@ -16,7 +16,7 @@ use zkevm::prover::{AggCircuitProof, Prover, TargetCircuitProof};
 use zkevm::utils::{load_kzg_params, load_or_create_seed};
 
 const PARAMS_DIR: &str = "./kzg_params/";
-const SEED_FILE: &str = "./test_seed";
+const SEED_FILE: &str = "./rng_seed";
 const OUT_PROOF_DIR: &str = "./out_proof/";
 const VERIFIER_NAME: &str = "zk-verifier.sol";
 

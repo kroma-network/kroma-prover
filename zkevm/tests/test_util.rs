@@ -7,7 +7,7 @@ use zkevm::utils::read_env_var;
 
 pub const GIT_VERSION: &str = git_version!();
 pub const PARAMS_DIR: &str = "./kzg_params";
-pub const SEED_PATH: &str = "./test_seed";
+pub const SEED_PATH: &str = "./rng_seed";
 
 pub static ENV_LOGGER: Once = Once::new();
 
