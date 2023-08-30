@@ -44,6 +44,15 @@ pub fn load_or_create_params(params_dir: &str, degree: usize) -> Result<ParamsKZ
     create_params(&params_path, degree)
 }
 
+pub fn load_kzg_params(params_dir: &str, degree: usize) -> Result<ParamsKZG<Bn256>> {
+    let params_path = format!("{params_dir}/params{degree}");
+    log::info!("load_params {}", params_path);
+    if !Path::new(&params_path).exists() {
+        panic!("failed to load kzg params");
+    }
+    load_params(&params_path, degree, DEFAULT_SERDE_FORMAT)
+}
+
 /// load params from file
 pub fn load_params(
     params_dir: &str,

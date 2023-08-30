@@ -11,7 +11,7 @@ use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE, MAX_TXS},
     io::write_file,
     prover::Prover,
-    utils::{get_block_trace_from_file, load_or_create_params, load_or_create_seed},
+    utils::{get_block_trace_from_file, load_kzg_params, load_or_create_seed},
 };
 
 #[derive(Parser, Debug)]
@@ -48,10 +48,10 @@ fn main() {
 
     // Prepare KZG params and rng for prover
     let mut timer = Measurer::new();
-    let params = load_or_create_params(&args.params_path.clone().unwrap(), *DEGREE)
-        .expect("failed to load or create params");
-    let agg_params = load_or_create_params(&args.params_path.unwrap(), *AGG_DEGREE)
-        .expect("failed to load or create params");
+    let params = load_kzg_params(&args.params_path.clone().unwrap(), *DEGREE)
+        .expect("failed to load kzg params");
+    let agg_params = load_kzg_params(&args.params_path.unwrap(), *AGG_DEGREE)
+        .expect("failed to load kzg params");
     let seed =
         load_or_create_seed(&args.seed_path.unwrap()).expect("failed to load or create seed");
     let rng = XorShiftRng::from_seed(seed);
