@@ -6,7 +6,7 @@ use zkevm::utils::get_block_trace_from_file;
 use zkevm::utils::read_env_var;
 
 pub const GIT_VERSION: &str = git_version!();
-pub const PARAMS_DIR: &str = "./test_params";
+pub const PARAMS_DIR: &str = "./kzg_params";
 pub const SEED_PATH: &str = "./test_seed";
 
 pub static ENV_LOGGER: Once = Once::new();

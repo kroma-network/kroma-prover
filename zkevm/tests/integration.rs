@@ -21,19 +21,19 @@ fn test_load_params() {
     init();
     log::info!("start");
     load_params(
-        "/home/ubuntu/scroll-zkevm/zkevm/test_params",
+        "/home/ubuntu/scroll-zkevm/zkevm/kzg_params",
         26,
         SerdeFormat::RawBytesUnchecked,
     )
     .unwrap();
     load_params(
-        "/home/ubuntu/scroll-zkevm/zkevm/test_params",
+        "/home/ubuntu/scroll-zkevm/zkevm/kzg_params",
         26,
         SerdeFormat::RawBytes,
     )
     .unwrap();
     load_params(
-        "/home/ubuntu/scroll-zkevm/zkevm/test_params.old",
+        "/home/ubuntu/scroll-zkevm/zkevm/kzg_params.old",
         26,
         SerdeFormat::Processed,
     )

@@ -12,7 +12,7 @@ Cargo.lock
 # for jetbrains
 .idea
 
-test_params*
+kzg_params*
 test_seed
 
 output_*
