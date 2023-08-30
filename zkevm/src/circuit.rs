@@ -44,7 +44,7 @@ const MAX_RWS: usize = 2_000_000;
 const MAX_KECCAK_ROWS: usize = 1_000_000;
 const MAX_EXP_STEPS: usize = 100_000;
 
-pub static CHAIN_ID: Lazy<u64> = Lazy::new(|| read_env_var("CHAIN_ID", 2357));
+pub static CHAIN_ID: Lazy<u64> = Lazy::new(|| read_env_var("CHAIN_ID", 255));
 pub static AGG_DEGREE: Lazy<usize> = Lazy::new(|| read_env_var("AGG_DEGREE", 26));
 pub static AUTO_TRUNCATE: Lazy<bool> = Lazy::new(|| read_env_var("AUTO_TRUNCATE", true));
 
