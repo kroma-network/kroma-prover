@@ -7,6 +7,13 @@ This [Prover](https://github.com/kroma-network/kroma/blob/dev/specs/zkevm-prover
 
 - Rust(rustc 1.68.0-nightly)
 - Golang (go1.20.3)
+- `axel` installed for downloading KZG params
+
+## Download KZG Params
+```shell
+# Download Params for KZG
+> sh download_params.sh
+```
 
 ## Kroma Prover Binary
 

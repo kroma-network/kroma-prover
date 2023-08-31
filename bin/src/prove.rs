@@ -6,12 +6,13 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use utils::check_chain_id;
 use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE, MAX_TXS},
     io::write_file,
     prover::Prover,
-    utils::{get_block_trace_from_file, load_or_create_params, load_or_create_seed},
+    utils::{get_block_trace_from_file, load_kzg_params, load_or_create_seed},
 };
 
 #[derive(Parser, Debug)]
@@ -44,14 +45,16 @@ fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
+    let chain_id = check_chain_id();
+    log::info!("chain_id: {chain_id}");
     let args = Args::parse();
 
     // Prepare KZG params and rng for prover
     let mut timer = Measurer::new();
-    let params = load_or_create_params(&args.params_path.clone().unwrap(), *DEGREE)
-        .expect("failed to load or create params");
-    let agg_params = load_or_create_params(&args.params_path.unwrap(), *AGG_DEGREE)
-        .expect("failed to load or create params");
+    let params = load_kzg_params(&args.params_path.clone().unwrap(), *DEGREE)
+        .expect("failed to load kzg params");
+    let agg_params = load_kzg_params(&args.params_path.unwrap(), *AGG_DEGREE)
+        .expect("failed to load kzg params");
     let seed =
         load_or_create_seed(&args.seed_path.unwrap()).expect("failed to load or create seed");
     let rng = XorShiftRng::from_seed(seed);

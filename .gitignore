@@ -18,5 +18,5 @@ zkevm/tests/traces/bridge/*.proof
 # ignore local logs
 *.log
 
-test_params
+kzg_params
 out_proof

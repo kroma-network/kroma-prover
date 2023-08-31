@@ -1,4 +1,5 @@
 use log::info;
+use std::env;
 use std::time::Instant;
 
 pub struct Measurer {
@@ -25,4 +26,18 @@ impl Measurer {
     pub fn end(&mut self, message: &str) {
         info!("{}, elapsed: {:?}", message, self.now.elapsed());
     }
+}
+
+pub fn check_chain_id() -> String {
+    let mut chain_id = String::new();
+    if let Ok(chain_id_value) = env::var("CHAIN_ID") {
+        if chain_id_value.parse::<u32>().is_err() {
+            panic!("CHAIN_ID environment variable is not set properly");
+        }
+        chain_id = chain_id_value;
+    }
+    if chain_id.is_empty() {
+        panic!("CHAIN_ID environment variable is not set");
+    }
+    chain_id
 }

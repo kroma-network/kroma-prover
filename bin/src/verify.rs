@@ -6,7 +6,7 @@ use zkevm::prover::{AggCircuitProof, TargetCircuitProof};
 use zkevm::verifier::Verifier;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE},
-    utils::load_or_create_params,
+    utils::load_kzg_params,
 };
 
 #[derive(Parser, Debug)]
@@ -34,10 +34,10 @@ fn main() {
     env_logger::init();
 
     let args = Args::parse();
-    let params = load_or_create_params(&args.params_path.clone().unwrap(), *DEGREE)
-        .expect("failed to load or create params");
-    let agg_params = load_or_create_params(&args.params_path.unwrap(), *AGG_DEGREE)
-        .expect("failed to load or create params");
+    let params = load_kzg_params(&args.params_path.clone().unwrap(), *DEGREE)
+        .expect("failed to load kzg params");
+    let agg_params = load_kzg_params(&args.params_path.unwrap(), *AGG_DEGREE)
+        .expect("failed to load kzg params");
     let agg_vk = read_from_file(&args.vk_path.unwrap());
 
     let mut v = Verifier::from_params(params, agg_params, Some(agg_vk));

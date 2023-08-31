@@ -13,10 +13,10 @@ use utils::Measurer;
 use zkevm::circuit::{EvmCircuit, StateCircuit, SuperCircuit, AGG_DEGREE, DEGREE};
 use zkevm::io::write_file;
 use zkevm::prover::{AggCircuitProof, Prover, TargetCircuitProof};
-use zkevm::utils::{load_or_create_params, load_or_create_seed};
+use zkevm::utils::{load_kzg_params, load_or_create_seed};
 
-const PARAMS_DIR: &str = "./test_params/";
-const SEED_FILE: &str = "./test_seed";
+const PARAMS_DIR: &str = "./kzg_params/";
+const SEED_FILE: &str = "./rng_seed";
 const OUT_PROOF_DIR: &str = "./out_proof/";
 const VERIFIER_NAME: &str = "zk-verifier.sol";
 
@@ -34,10 +34,10 @@ impl ProofResult {
 
 pub fn create_proof(trace: BlockTrace, proof_type: ProofType) -> Result<ProofResult> {
     // load or create material for prover
-    let params = load_or_create_params(PARAMS_DIR, *DEGREE)
-        .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load or create params")));
-    let agg_params = load_or_create_params(PARAMS_DIR, *AGG_DEGREE)
-        .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load or create agg params")));
+    let params = load_kzg_params(PARAMS_DIR, *DEGREE)
+        .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load kzg params")));
+    let agg_params = load_kzg_params(PARAMS_DIR, *AGG_DEGREE)
+        .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load kzg agg params")));
     let seed = load_or_create_seed(SEED_FILE)
         .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load or create seed")));
     let rng = XorShiftRng::from_seed(seed);

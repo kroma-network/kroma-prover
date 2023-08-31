@@ -5,6 +5,7 @@ pub mod utils;
 use crate::prove::{create_proof, ProofResult};
 use crate::spec::ProofType;
 use crate::utils::{kroma_err, kroma_info};
+use ::utils::check_chain_id;
 use clap::Parser;
 use jsonrpc_derive::rpc;
 use jsonrpc_http_server::jsonrpc_core::Result;
@@ -12,7 +13,6 @@ use jsonrpc_http_server::ServerBuilder;
 use spec::ZkSpec;
 use types::eth::BlockTrace;
 use zkevm::circuit::{CHAIN_ID, MAX_TXS};
-
 #[rpc]
 pub trait Rpc {
     #[rpc(name = "spec")]
@@ -119,6 +119,7 @@ fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
+    let chain_id = check_chain_id();
     let args = Args::parse();
     let endpoint = args.endpoint.unwrap_or("127.0.0.1:3030".to_string());
 
@@ -128,7 +129,9 @@ fn main() {
     #[cfg(feature = "mock-server")]
     io.extend_with(MockRpcImpl.to_delegate());
 
-    kroma_info(format!("Prover server starting on {endpoint}"));
+    kroma_info(format!(
+        "Prover server starting on {endpoint}. CHAIN_ID: {chain_id}"
+    ));
     let server = ServerBuilder::new(io)
         .threads(3)
         .max_request_body_size(32_000_000)
