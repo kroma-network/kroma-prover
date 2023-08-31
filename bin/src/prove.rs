@@ -6,6 +6,7 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use utils::check_chain_id;
 use utils::Measurer;
 use zkevm::{
     circuit::{EvmCircuit, StateCircuit, AGG_DEGREE, DEGREE, MAX_TXS},
@@ -44,6 +45,8 @@ fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
+    let chain_id = check_chain_id();
+    log::info!("chain_id: {chain_id}");
     let args = Args::parse();
 
     // Prepare KZG params and rng for prover
