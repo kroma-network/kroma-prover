@@ -54,9 +54,7 @@ Mock client for test (entry: prover-grpc/src/mock_client.rs)
 Setup (entry: bin/src/setup.rs)
 
 ```shell
-> cargo build --release --bin setup
-
-> ./target/release/setup --params <params-file-path> --seed <seed-file-path>
+> cargo run --release --bin setup -- --help
 ```
 
 If you run into linking issues during setup you may need to run
