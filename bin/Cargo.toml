@@ -23,6 +23,7 @@ tokio = { version = "1", features = ["full"] }
 zkevm = { path = "../zkevm" }
 types = { path = "../types", features = ["test"] }
 utils = { path = "../utils" }
+halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", tag = "v2022_09_10" }
 
 [[bin]]
 name = "setup"

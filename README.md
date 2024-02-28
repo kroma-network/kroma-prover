@@ -68,9 +68,7 @@ to move the zktrielib into a path where your linker can locate it
 Prove (entry: bin/src/prove.rs)
 
 ```shell
-> cargo build --release --bin prove
-
-> ./target/release/prove --help
+> cargo run --release --bin prove -- --help
 ```
 
 ## License
