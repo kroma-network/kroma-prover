@@ -4,7 +4,7 @@ version = "0.3.0"
 edition = "2021"
 
 [dependencies]
-eth-types = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "6ef08f5", feature = ["kroma"]}
+eth-types = { git = "https://github.com/kroma-network/zkevm-circuits.git", rev = "4f431bf" }
 base64 = "0.13.0"
 blake2 = "0.10.3"
 ethers-core = "0.17.0"

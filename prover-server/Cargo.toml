@@ -21,7 +21,7 @@ serde_json = "1.0.96"
 serde_derive = "1.0.164"
 serde = "1.0.164"
 
-halo2_proofs = { git = "https://github.com/kroma-network/halo2.git", rev = "9922fbb"  }
+halo2_proofs = { git = "https://github.com/kroma-network/halo2.git", branch = "halo2-with-tachyon"  }
 types = { path = "../types", features = ["test"] }
 zkevm = { path = "../zkevm" }
 utils = { path = "../utils" }
