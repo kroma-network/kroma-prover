@@ -1,8 +1,6 @@
 use crate::spec::ProofType;
 use crate::utils::{kroma_info, kroma_msg};
 use jsonrpc_core::Result;
-use rand_core::SeedableRng;
-use rand_xorshift::XorShiftRng;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::create_dir_all;
@@ -40,7 +38,6 @@ pub fn create_proof(trace: BlockTrace, proof_type: ProofType) -> Result<ProofRes
         .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load kzg agg params")));
     let seed = load_or_create_seed(SEED_FILE)
         .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load or create seed")));
-    let rng = XorShiftRng::from_seed(seed);
 
     // prepare directory to store proof. (i.e., ./out_proof/<block_number>/)
     let height_hex = trace.header.number.unwrap().to_string();
@@ -48,7 +45,7 @@ pub fn create_proof(trace: BlockTrace, proof_type: ProofType) -> Result<ProofRes
     let _ = create_dir_all(&out_dir);
 
     // build prover
-    let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
+    let mut prover = Prover::from_params_and_seed(params, agg_params, seed);
     // specify the dir to store the vk and proof of the intermediate circuit.
     prover.debug_dir = out_dir.to_str().unwrap().to_string();
 

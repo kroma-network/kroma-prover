@@ -1,5 +1,5 @@
 use clap::Parser;
-use halo2_proofs::{halo2curves::bn256::Bn256, poly::kzg::commitment::ParamsKZG};
+use halo2_proofs::{consts::SEED, halo2curves::bn256::Bn256, poly::kzg::commitment::ParamsKZG};
 use std::{
     collections::HashMap,
     ffi::OsString,
@@ -37,6 +37,13 @@ enum CircuitType {
 }
 
 impl Args {
+    fn is_tachyon() -> bool {
+        #[cfg(not(feature = "tachyon"))]
+        return false;
+        #[cfg(feature = "tachyon")]
+        return true;
+    }
+
     fn get_params_dir(&self) -> String {
         match &self.params_dir {
             Some(dir) => dir.clone(),
@@ -49,10 +56,13 @@ impl Args {
     }
 
     fn get_seed() -> [u8; 16] {
-        [
+        #[cfg(not(feature = "tachyon"))]
+        return [
             0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
             0xbc, 0xe5,
-        ]
+        ];
+        #[cfg(feature = "tachyon")]
+        return SEED;
     }
 
     fn get_proof_type(&self) -> CircuitType {
@@ -115,7 +125,8 @@ fn main() {
     let chain_id = check_chain_id();
 
     env_logger::init();
-    log::info!("chain_id: {chain_id}");
+    let is_tachyon = Args::is_tachyon();
+    log::info!("chain_id: {chain_id}, tachyon: {is_tachyon}");
 
     // Prepare KZG params and rng for prover
     let mut timer = Measurer::new();
