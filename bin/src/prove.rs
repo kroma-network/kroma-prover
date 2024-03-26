@@ -28,6 +28,9 @@ struct Args {
     /// Specify circuit type in [evm, state, agg]
     #[clap(short, long = "circuit")]
     circuit: String,
+    /// Specify whether to create `Verifier.sol`. (default: true)
+    #[clap(short, long = "solidity", default_value_t = true)]
+    does_gen_sol: bool,
 }
 
 enum CircuitType {
@@ -77,11 +80,17 @@ impl Args {
         }
     }
 
-    fn load_params(&self) -> (ParamsKZG<Bn256>, ParamsKZG<Bn256>) {
+    fn load_params(&self) -> (ParamsKZG<Bn256>, Option<ParamsKZG<Bn256>>) {
         let params =
             load_kzg_params(&self.get_params_dir(), *DEGREE).expect("failed to load kzg params");
-        let agg_params = load_kzg_params(&self.get_params_dir(), *AGG_DEGREE)
-            .expect("failed to load kzg params");
+        let agg_params = match self.get_proof_type() {
+            CircuitType::AGG => {
+                let params = load_kzg_params(&self.get_params_dir(), *AGG_DEGREE)
+                    .expect("failed to load kzg params");
+                Some(params)
+            }
+            _ => None,
+        };
         (params, agg_params)
     }
 
@@ -165,17 +174,20 @@ fn main() {
             CircuitType::AGG => {
                 let mut proof_path = PathBuf::from(&trace_name).join("agg.proof");
                 let agg_proof = prover
-                    .create_agg_circuit_proof(&trace)
+                    .create_agg_circuit_proof(&trace, args.does_gen_sol)
                     .expect("cannot generate agg_proof");
                 fs::create_dir_all(&proof_path).unwrap();
                 agg_proof.write_to_dir(&mut proof_path);
 
-                let sol = prover.create_solidity_verifier(&agg_proof);
-                write_file(
-                    &mut out_dir,
-                    "verifier.sol",
-                    &Vec::<u8>::from(sol.as_bytes()),
-                );
+                if args.does_gen_sol {
+                    let sol = prover.create_solidity_verifier(&agg_proof);
+                    write_file(
+                        &mut out_dir,
+                        "verifier.sol",
+                        &Vec::<u8>::from(sol.as_bytes()),
+                    );
+                    log::info!("verifier solidity to {}", out_dir.to_str().unwrap());
+                }
                 log::info!("output files to {}", out_dir.to_str().unwrap());
             }
         }

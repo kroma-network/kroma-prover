@@ -26,7 +26,7 @@ use halo2_proofs::{
     plonk::{keygen_pk, keygen_pk2, keygen_vk, ProvingKey, VerifyingKey},
     poly::{
         commitment::ParamsProver,
-        kzg::commitment::{KZGCommitmentScheme, ParamsKZG, ParamsVerifierKZG},
+        kzg::commitment::{KZGCommitmentScheme, ParamsKZG},
     },
     SerdeFormat,
 };
@@ -117,7 +117,7 @@ impl AggCircuitProof {
 #[derive(Debug)]
 pub struct Prover {
     pub params: ParamsKZG<Bn256>,
-    pub agg_params: ParamsKZG<Bn256>,
+    pub agg_params: Option<ParamsKZG<Bn256>>,
     #[cfg(not(feature = "tachyon"))]
     pub rng: XorShiftRng,
     #[cfg(feature = "tachyon")]
@@ -131,7 +131,11 @@ pub struct Prover {
 
 impl Prover {
     #[cfg(not(feature = "tachyon"))]
-    pub fn new(params: ParamsKZG<Bn256>, agg_params: ParamsKZG<Bn256>, rng: XorShiftRng) -> Self {
+    pub fn new(
+        params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
+        rng: XorShiftRng,
+    ) -> Self {
         Self {
             params,
             agg_params,
@@ -143,7 +147,11 @@ impl Prover {
     }
 
     #[cfg(feature = "tachyon")]
-    pub fn new(params: ParamsKZG<Bn256>, agg_params: ParamsKZG<Bn256>, rng: XORShiftRng) -> Self {
+    pub fn new(
+        params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
+        rng: XORShiftRng,
+    ) -> Self {
         Self {
             params,
             agg_params,
@@ -180,7 +188,7 @@ impl Prover {
     #[cfg(not(feature = "tachyon"))]
     pub fn from_params_and_rng(
         params: ParamsKZG<Bn256>,
-        agg_params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
         rng: XorShiftRng,
     ) -> Self {
         Self::new(params, agg_params, rng)
@@ -189,7 +197,7 @@ impl Prover {
     #[cfg(feature = "tachyon")]
     pub fn from_params_and_rng(
         params: ParamsKZG<Bn256>,
-        agg_params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
         rng: XORShiftRng,
     ) -> Self {
         Self::new(params, agg_params, rng)
@@ -197,19 +205,13 @@ impl Prover {
 
     pub fn from_params_and_seed(
         params: ParamsKZG<Bn256>,
-        agg_params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
         seed: [u8; 16],
     ) -> Self {
-        {
-            let target_params_verifier: &ParamsVerifierKZG<Bn256> = params.verifier_params();
-            let agg_params_verifier: &ParamsVerifierKZG<Bn256> = agg_params.verifier_params();
-            log::info!(
-                "params g2 {:?} s_g2 {:?}",
-                target_params_verifier.g2(),
-                target_params_verifier.s_g2()
-            );
-            debug_assert_eq!(target_params_verifier.s_g2(), agg_params_verifier.s_g2());
-            debug_assert_eq!(target_params_verifier.g2(), agg_params_verifier.g2());
+        if let Some(agg_params) = &agg_params {
+            log::info!("params g2 {:?} s_g2 {:?}", params.g2(), params.s_g2());
+            debug_assert_eq!(params.s_g2(), agg_params.s_g2());
+            debug_assert_eq!(params.g2(), agg_params.g2());
         }
         #[cfg(not(feature = "tachyon"))]
         let rng = XorShiftRng::from_seed(seed);
@@ -224,7 +226,14 @@ impl Prover {
         let agg_params =
             load_or_create_params(params_fpath, *AGG_DEGREE).expect("failed to init params");
         let seed = load_seed(seed_fpath).expect("failed to init rng");
-        Self::from_params_and_seed(params, agg_params, seed)
+        Self::from_params_and_seed(params, Some(agg_params), seed)
+    }
+
+    pub fn get_agg_params(&self) -> &ParamsKZG<Bn256> {
+        match &self.agg_params {
+            Some(params) => &params,
+            _ => panic!("agg params must be available"),
+        }
     }
 
     pub fn debug_load_proved_circuit<C: TargetCircuit>(
@@ -292,6 +301,7 @@ impl Prover {
         fn from_0_to_n<const N: usize>() -> [usize; N] {
             core::array::from_fn(|i| i)
         }
+
         // NOTE: If any changes are made to circuit aggregation, names should be reflected, too.
         let names = [SuperCircuit::name()];
         MultiCircuitSolidityGenerate {
@@ -307,7 +317,7 @@ impl Prover {
             }),
 
             verify_vk: self.agg_pk.as_ref().expect("pk should be inited").get_vk(),
-            verify_params: &self.agg_params,
+            verify_params: self.get_agg_params(),
             verify_circuit_instance: load_instances(&proof.instance),
             proof: proof.proof.clone(),
             verify_public_inputs_size: 4, // not used now
@@ -318,23 +328,26 @@ impl Prover {
     pub fn create_agg_circuit_proof(
         &mut self,
         block_trace: &BlockTrace,
+        create_verifier_sol: bool,
     ) -> anyhow::Result<AggCircuitProof> {
-        self.create_agg_circuit_proof_batch(&[block_trace.clone()])
+        self.create_agg_circuit_proof_batch(&[block_trace.clone()], create_verifier_sol)
     }
 
     pub fn create_agg_circuit_proof_batch(
         &mut self,
         block_traces: &[BlockTrace],
+        create_verifier_sol: bool,
     ) -> anyhow::Result<AggCircuitProof> {
         // See comments in `create_solidity_verifier()`.
         let circuit_results: Vec<ProvedCircuit> =
             vec![self.prove_circuit::<SuperCircuit>(block_traces)?];
-        self.create_agg_circuit_proof_impl(circuit_results)
+        self.create_agg_circuit_proof_impl(circuit_results, create_verifier_sol)
     }
 
     pub fn create_agg_circuit_proof_impl(
         &mut self,
         circuit_results: Vec<ProvedCircuit>,
+        create_verifier_sol: bool,
     ) -> anyhow::Result<AggCircuitProof> {
         ///////////////////////////// build verifier circuit from block result ///////////////////
         let target_circuits = [0];
@@ -375,11 +388,12 @@ impl Prover {
 
         if self.agg_pk.is_none() {
             log::info!("generate agg pk: begin");
-            let verify_circuit_vk =
-                keygen_vk(&self.agg_params, &verify_circuit).expect("keygen_vk should not fail");
+            let verify_circuit_vk = keygen_vk(self.get_agg_params(), &verify_circuit)
+                .expect("keygen_vk should not fail");
             log::info!("generate agg pk: vk done");
-            let verify_circuit_pk = keygen_pk(&self.agg_params, verify_circuit_vk, &verify_circuit)
-                .expect("keygen_pk should not fail");
+            let verify_circuit_pk =
+                keygen_pk(self.get_agg_params(), verify_circuit_vk, &verify_circuit)
+                    .expect("keygen_pk should not fail");
             self.agg_pk = Some(verify_circuit_pk);
             log::info!("init_agg_pk: done");
         } else {
@@ -426,10 +440,15 @@ impl Prover {
 
             let mut prover = {
                 let mut params_bytes = vec![];
-                self.agg_params.write(&mut params_bytes).unwrap();
+                let agg_params_ref = self.get_agg_params();
+                agg_params_ref.write(&mut params_bytes).unwrap();
+                let k = agg_params_ref.k();
+                if !create_verifier_sol {
+                    self.agg_params = None;
+                }
                 TachyonGWCProver::<KZGCommitmentScheme<Bn256>>::from_params(
                     TranscriptType::Sha256 as u8,
-                    self.agg_params.k(),
+                    k,
                     params_bytes.as_slice(),
                 )
             };
