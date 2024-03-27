@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-use std::io::Cursor;
-use std::path::PathBuf;
-
 use crate::circuit::{
     block_traces_to_witness_block, check_batch_capacity, SuperCircuit, TargetCircuit, AGG_DEGREE,
     DEGREE,
@@ -11,20 +7,35 @@ use crate::io::{
     serialize_verify_circuit_final_pair, serialize_vk, write_verify_circuit_final_pair,
     write_verify_circuit_instance, write_verify_circuit_proof, write_verify_circuit_vk,
 };
-use crate::utils::{load_or_create_params, read_env_var};
-use crate::utils::{load_seed, metric_of_witness_block};
+use crate::utils::{load_or_create_params, load_seed, metric_of_witness_block, read_env_var};
 use anyhow::{bail, Error};
-use halo2_proofs::dev::MockProver;
-use halo2_proofs::halo2curves::bn256::{Bn256, Fr, G1Affine};
-use halo2_proofs::plonk::{
-    create_proof, keygen_pk, keygen_pk2, keygen_vk, ProvingKey, VerifyingKey,
+#[cfg(feature = "tachyon")]
+use halo2_proofs::{
+    bn254::{
+        GWCProver as TachyonGWCProver, PoseidonWrite as TachyonPoseidonWrite,
+        ProvingKey as TachyonProvingKey, Sha256Write as TachyonSha256Write, TachyonProver,
+    },
+    consts::TranscriptType,
+    plonk::tachyon::create_proof as create_tachyon_proof,
+    poly::commitment::Params,
+    xor_shift_rng::XORShiftRng,
 };
-use halo2_proofs::poly::commitment::ParamsProver;
-use halo2_proofs::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG, ParamsVerifierKZG};
-use halo2_proofs::poly::kzg::multiopen::ProverGWC;
-use halo2_proofs::transcript::{Challenge255, PoseidonWrite};
-use halo2_proofs::SerdeFormat;
-use halo2_snark_aggregator_api::transcript::sha::ShaWrite;
+use halo2_proofs::{
+    dev::MockProver,
+    halo2curves::bn256::{Bn256, Fr, G1Affine},
+    plonk::{keygen_pk, keygen_pk2, keygen_vk, ProvingKey, VerifyingKey},
+    poly::{
+        commitment::ParamsProver,
+        kzg::commitment::{KZGCommitmentScheme, ParamsKZG},
+    },
+    SerdeFormat,
+};
+#[cfg(not(feature = "tachyon"))]
+use halo2_proofs::{
+    plonk::create_proof,
+    poly::kzg::multiopen::ProverGWC,
+    transcript::{Challenge255, PoseidonWrite},
+};
 use halo2_snark_aggregator_circuit::verify_circuit::{
     final_pair_to_instances, Halo2CircuitInstance, Halo2CircuitInstances, Halo2VerifierCircuit,
     Halo2VerifierCircuits, SingleProofWitness,
@@ -32,12 +43,17 @@ use halo2_snark_aggregator_circuit::verify_circuit::{
 use halo2_snark_aggregator_solidity::{MultiCircuitSolidityGenerate, SolidityGenerate};
 use log::info;
 use once_cell::sync::Lazy;
-
 use rand::SeedableRng;
-use rand_xorshift::XorShiftRng;
 use serde_derive::{Deserialize, Serialize};
-use types::base64;
-use types::eth::BlockTrace;
+use std::collections::HashMap;
+use std::io::Cursor;
+use std::path::PathBuf;
+use types::{base64, eth::BlockTrace};
+
+#[cfg(not(feature = "tachyon"))]
+use halo2_snark_aggregator_api::transcript::sha::ShaWrite;
+#[cfg(not(feature = "tachyon"))]
+use rand_xorshift::XorShiftRng;
 
 #[cfg(target_os = "linux")]
 extern crate procfs;
@@ -101,8 +117,11 @@ impl AggCircuitProof {
 #[derive(Debug)]
 pub struct Prover {
     pub params: ParamsKZG<Bn256>,
-    pub agg_params: ParamsKZG<Bn256>,
+    pub agg_params: Option<ParamsKZG<Bn256>>,
+    #[cfg(not(feature = "tachyon"))]
     pub rng: XorShiftRng,
+    #[cfg(feature = "tachyon")]
+    pub rng: XORShiftRng,
 
     pub target_circuit_pks: HashMap<String, ProvingKey<G1Affine>>,
     pub agg_pk: Option<ProvingKey<G1Affine>>,
@@ -111,11 +130,32 @@ pub struct Prover {
 }
 
 impl Prover {
-    pub fn new(params: ParamsKZG<Bn256>, agg_params: ParamsKZG<Bn256>, rng: XorShiftRng) -> Self {
+    #[cfg(not(feature = "tachyon"))]
+    pub fn new(
+        params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
+        rng: XorShiftRng,
+    ) -> Self {
         Self {
             params,
             agg_params,
-            rng,
+            rng: rng,
+            target_circuit_pks: Default::default(),
+            agg_pk: None,
+            debug_dir: Default::default(),
+        }
+    }
+
+    #[cfg(feature = "tachyon")]
+    pub fn new(
+        params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
+        rng: XORShiftRng,
+    ) -> Self {
+        Self {
+            params,
+            agg_params,
+            rng: rng,
             target_circuit_pks: Default::default(),
             agg_pk: None,
             debug_dir: Default::default(),
@@ -145,31 +185,39 @@ impl Prover {
         Self::tick(&format!("after init pk of {}", C::name()));
     }
 
+    #[cfg(not(feature = "tachyon"))]
     pub fn from_params_and_rng(
         params: ParamsKZG<Bn256>,
-        agg_params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
         rng: XorShiftRng,
+    ) -> Self {
+        Self::new(params, agg_params, rng)
+    }
+
+    #[cfg(feature = "tachyon")]
+    pub fn from_params_and_rng(
+        params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
+        rng: XORShiftRng,
     ) -> Self {
         Self::new(params, agg_params, rng)
     }
 
     pub fn from_params_and_seed(
         params: ParamsKZG<Bn256>,
-        agg_params: ParamsKZG<Bn256>,
+        agg_params: Option<ParamsKZG<Bn256>>,
         seed: [u8; 16],
     ) -> Self {
-        {
-            let target_params_verifier: &ParamsVerifierKZG<Bn256> = params.verifier_params();
-            let agg_params_verifier: &ParamsVerifierKZG<Bn256> = agg_params.verifier_params();
-            log::info!(
-                "params g2 {:?} s_g2 {:?}",
-                target_params_verifier.g2(),
-                target_params_verifier.s_g2()
-            );
-            debug_assert_eq!(target_params_verifier.s_g2(), agg_params_verifier.s_g2());
-            debug_assert_eq!(target_params_verifier.g2(), agg_params_verifier.g2());
+        if let Some(agg_params) = &agg_params {
+            log::info!("params g2 {:?} s_g2 {:?}", params.g2(), params.s_g2());
+            debug_assert_eq!(params.s_g2(), agg_params.s_g2());
+            debug_assert_eq!(params.g2(), agg_params.g2());
         }
+        #[cfg(not(feature = "tachyon"))]
         let rng = XorShiftRng::from_seed(seed);
+        #[cfg(feature = "tachyon")]
+        let rng = XORShiftRng::from_seed(seed);
+
         Self::from_params_and_rng(params, agg_params, rng)
     }
 
@@ -178,7 +226,14 @@ impl Prover {
         let agg_params =
             load_or_create_params(params_fpath, *AGG_DEGREE).expect("failed to init params");
         let seed = load_seed(seed_fpath).expect("failed to init rng");
-        Self::from_params_and_seed(params, agg_params, seed)
+        Self::from_params_and_seed(params, Some(agg_params), seed)
+    }
+
+    pub fn get_agg_params(&self) -> &ParamsKZG<Bn256> {
+        match &self.agg_params {
+            Some(params) => &params,
+            _ => panic!("agg params must be available"),
+        }
     }
 
     pub fn debug_load_proved_circuit<C: TargetCircuit>(
@@ -246,6 +301,7 @@ impl Prover {
         fn from_0_to_n<const N: usize>() -> [usize; N] {
             core::array::from_fn(|i| i)
         }
+
         // NOTE: If any changes are made to circuit aggregation, names should be reflected, too.
         let names = [SuperCircuit::name()];
         MultiCircuitSolidityGenerate {
@@ -261,7 +317,7 @@ impl Prover {
             }),
 
             verify_vk: self.agg_pk.as_ref().expect("pk should be inited").get_vk(),
-            verify_params: &self.agg_params,
+            verify_params: self.get_agg_params(),
             verify_circuit_instance: load_instances(&proof.instance),
             proof: proof.proof.clone(),
             verify_public_inputs_size: 4, // not used now
@@ -272,23 +328,26 @@ impl Prover {
     pub fn create_agg_circuit_proof(
         &mut self,
         block_trace: &BlockTrace,
+        create_verifier_sol: bool,
     ) -> anyhow::Result<AggCircuitProof> {
-        self.create_agg_circuit_proof_batch(&[block_trace.clone()])
+        self.create_agg_circuit_proof_batch(&[block_trace.clone()], create_verifier_sol)
     }
 
     pub fn create_agg_circuit_proof_batch(
         &mut self,
         block_traces: &[BlockTrace],
+        create_verifier_sol: bool,
     ) -> anyhow::Result<AggCircuitProof> {
         // See comments in `create_solidity_verifier()`.
         let circuit_results: Vec<ProvedCircuit> =
             vec![self.prove_circuit::<SuperCircuit>(block_traces)?];
-        self.create_agg_circuit_proof_impl(circuit_results)
+        self.create_agg_circuit_proof_impl(circuit_results, create_verifier_sol)
     }
 
     pub fn create_agg_circuit_proof_impl(
         &mut self,
         circuit_results: Vec<ProvedCircuit>,
+        create_verifier_sol: bool,
     ) -> anyhow::Result<AggCircuitProof> {
         ///////////////////////////// build verifier circuit from block result ///////////////////
         let target_circuits = [0];
@@ -329,11 +388,12 @@ impl Prover {
 
         if self.agg_pk.is_none() {
             log::info!("generate agg pk: begin");
-            let verify_circuit_vk =
-                keygen_vk(&self.agg_params, &verify_circuit).expect("keygen_vk should not fail");
+            let verify_circuit_vk = keygen_vk(self.get_agg_params(), &verify_circuit)
+                .expect("keygen_vk should not fail");
             log::info!("generate agg pk: vk done");
-            let verify_circuit_pk = keygen_pk(&self.agg_params, verify_circuit_vk, &verify_circuit)
-                .expect("keygen_pk should not fail");
+            let verify_circuit_pk =
+                keygen_pk(self.get_agg_params(), verify_circuit_vk, &verify_circuit)
+                    .expect("keygen_pk should not fail");
             self.agg_pk = Some(verify_circuit_pk);
             log::info!("init_agg_pk: done");
         } else {
@@ -341,7 +401,10 @@ impl Prover {
         }
 
         let instances_slice: &[&[&[Fr]]] = &[&[&verify_circuit_instances[..]]];
+        #[cfg(not(feature = "tachyon"))]
         let mut transcript = ShaWrite::<_, G1Affine, Challenge255<_>, sha2::Sha256>::init(vec![]);
+        #[cfg(feature = "tachyon")]
+        let mut transcript = TachyonSha256Write::init(vec![]);
 
         if *MOCK_PROVE {
             log::info!("mock prove agg circuit");
@@ -359,22 +422,69 @@ impl Prover {
             }
             log::info!("mock prove agg circuit done");
         }
-        log::info!("create agg proof");
-        create_proof::<KZGCommitmentScheme<_>, ProverGWC<_>, _, _, _, _>(
-            &self.agg_params,
-            self.agg_pk.as_ref().unwrap(),
-            &[verify_circuit],
-            instances_slice,
-            self.rng.clone(),
-            &mut transcript,
-        )?;
+
+        let mut proof;
+        #[cfg(feature = "tachyon")]
+        {
+            log::info!("create agg proof by tachyon prover");
+
+            let mut tachyon_agg_pk = {
+                let mut pk_bytes: Vec<u8> = vec![];
+                self.agg_pk
+                    .as_ref()
+                    .unwrap()
+                    .write(&mut pk_bytes, halo2_proofs::SerdeFormat::RawBytesUnchecked)
+                    .unwrap();
+                TachyonProvingKey::from(pk_bytes.as_slice())
+            };
+
+            let mut prover = {
+                let mut params_bytes = vec![];
+                let agg_params_ref = self.get_agg_params();
+                agg_params_ref.write(&mut params_bytes).unwrap();
+                let k = agg_params_ref.k();
+                if !create_verifier_sol {
+                    self.agg_params = None;
+                }
+                TachyonGWCProver::<KZGCommitmentScheme<Bn256>>::from_params(
+                    TranscriptType::Sha256 as u8,
+                    k,
+                    params_bytes.as_slice(),
+                )
+            };
+
+            create_tachyon_proof::<_, _, _, _, _>(
+                &mut prover,
+                &mut tachyon_agg_pk,
+                &[verify_circuit],
+                instances_slice,
+                self.rng.clone(),
+                &mut transcript,
+            )
+            .expect("proof generation should not fail");
+            proof = transcript.finalize();
+            let proof_last = prover.get_proof();
+            proof.extend_from_slice(&proof_last);
+        }
+        #[cfg(not(feature = "tachyon"))]
+        {
+            log::info!("create agg proof");
+            create_proof::<KZGCommitmentScheme<_>, ProverGWC<_>, _, _, _, _>(
+                &self.agg_params,
+                self.agg_pk.as_ref().unwrap(),
+                &[verify_circuit],
+                instances_slice,
+                self.rng.clone(),
+                &mut transcript,
+            )?;
+            proof = transcript.finalize();
+        }
+
         log::info!(
             "create agg proof done, block proved {}/{}",
             circuit_results[0].proved_block_count,
             circuit_results[0].original_block_count
         );
-
-        let proof = transcript.finalize();
 
         let instances_for_serde = serialize_fr_tensor(&[vec![verify_circuit_instances]]);
         let instance_bytes = serde_json::to_vec(&instances_for_serde)?;
@@ -454,7 +564,10 @@ impl Prover {
             metric_of_witness_block(&witness_block)
         );
         let (circuit, instance) = C::from_witness_block(&witness_block)?;
+        #[cfg(not(feature = "tachyon"))]
         let mut transcript = PoseidonWrite::<_, G1Affine, Challenge255<_>>::init(vec![]);
+        #[cfg(feature = "tachyon")]
+        let mut transcript = TachyonPoseidonWrite::init(vec![]);
 
         let instance_slice = instance.iter().map(|x| &x[..]).collect::<Vec<_>>();
 
@@ -485,14 +598,53 @@ impl Prover {
             self.init_pk::<C>(&C::empty());
         }
         let pk = &self.target_circuit_pks[&C::name()];
-        create_proof::<KZGCommitmentScheme<_>, ProverGWC<_>, _, _, _, _>(
-            &self.params,
-            pk,
-            &[circuit],
-            public_inputs,
-            self.rng.clone(),
-            &mut transcript,
-        )?;
+
+        let mut proof;
+        #[cfg(feature = "tachyon")]
+        {
+            let mut tachyon_pk = {
+                let mut pk_bytes: Vec<u8> = vec![];
+                pk.write(&mut pk_bytes, halo2_proofs::SerdeFormat::RawBytesUnchecked)
+                    .unwrap();
+                TachyonProvingKey::from(pk_bytes.as_slice())
+            };
+
+            let mut prover = {
+                let mut params_bytes = vec![];
+                self.params.write(&mut params_bytes).unwrap();
+                TachyonGWCProver::<KZGCommitmentScheme<Bn256>>::from_params(
+                    TranscriptType::Poseidon as u8,
+                    self.params.k(),
+                    params_bytes.as_slice(),
+                )
+            };
+
+            create_tachyon_proof::<_, _, _, _, _>(
+                &mut prover,
+                &mut tachyon_pk,
+                &[circuit],
+                public_inputs,
+                self.rng.clone(),
+                &mut transcript,
+            )
+            .expect("proof generation should not fail");
+            proof = transcript.finalize();
+            let proof_last = prover.get_proof();
+            proof.extend_from_slice(&proof_last);
+        }
+        #[cfg(not(feature = "tachyon"))]
+        {
+            create_proof::<KZGCommitmentScheme<_>, ProverGWC<_>, _, _, _, _>(
+                &self.params,
+                pk,
+                &[circuit],
+                public_inputs,
+                self.rng.clone(),
+                &mut transcript,
+            )?;
+            proof = transcript.finalize();
+        }
+
         info!(
             "Create {} proof of block {} ... block {} Successfully!",
             C::name(),
@@ -500,7 +652,6 @@ impl Prover {
             block_traces[block_traces.len() - 1].header.hash.unwrap(),
         );
         let instance_bytes = serialize_instance(&instance);
-        let proof = transcript.finalize();
         let name = C::name();
         log::debug!(
             "{} circuit: proof {:?}, instance len {}",

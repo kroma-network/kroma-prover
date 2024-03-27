@@ -20,9 +20,14 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0.66"
 tokio = { version = "1", features = ["full"] }
-zkevm = { path = "../zkevm" }
+zkevm = { path = "../zkevm", features = ["tachyon"] }
 types = { path = "../types", features = ["test"] }
 utils = { path = "../utils" }
+halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", tag = "v2022_09_10" }
+
+[features]
+default = ["tachyon"]
+tachyon = []
 
 [[bin]]
 name = "setup"

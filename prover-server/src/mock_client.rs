@@ -13,7 +13,7 @@ use std::fs;
 use std::time::Duration;
 use types::eth::BlockTrace;
 
-const CLIENT_TIMEOUT_SEC: u64 = 7200;
+const CLIENT_TIMEOUT_SEC: u64 = 10800;
 const DEFAULT_RPC_SERVER_ENDPOINT: &str = "http://127.0.0.1:3030";
 
 #[derive(Parser, Debug)]

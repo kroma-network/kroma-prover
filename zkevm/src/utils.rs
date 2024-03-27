@@ -44,6 +44,15 @@ pub fn load_or_create_params(params_dir: &str, degree: usize) -> Result<ParamsKZ
     create_params(&params_path, degree)
 }
 
+pub fn create_kzg_params_to_file(params_dir: &str, degree: usize) {
+    let params_path = format!("{params_dir}/params{degree}");
+    if Path::new(&params_path).exists() {
+        log::info!("params with degree {degree}, already exists");
+    } else {
+        create_params(&params_path, degree).unwrap();
+    }
+}
+
 pub fn load_kzg_params(params_dir: &str, degree: usize) -> Result<ParamsKZG<Bn256>> {
     let params_path = format!("{params_dir}/params{degree}");
     log::info!("load_params {}", params_path);

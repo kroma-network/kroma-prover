@@ -21,9 +21,9 @@ serde_json = "1.0.96"
 serde_derive = "1.0.164"
 serde = "1.0.164"
 
-halo2_proofs = { git = "https://github.com/kroma-network/halo2.git", rev = "9922fbb"  }
+halo2_proofs = { git = "https://github.com/kroma-network/halo2.git", branch = "halo2-with-tachyon"  }
 types = { path = "../types", features = ["test"] }
-zkevm = { path = "../zkevm" }
+zkevm = { path = "../zkevm", features = ["tachyon"] }
 utils = { path = "../utils" }
 dotenv = "0.15.0"
 env_logger = "0.10.0"
@@ -44,4 +44,6 @@ name = "mock-client"
 path = "src/mock_client.rs"
 
 [features]
+default = ["tachyon"]
+tachyon = []
 mock-server = []

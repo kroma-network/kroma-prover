@@ -1,8 +1,6 @@
 use crate::spec::ProofType;
 use crate::utils::{kroma_info, kroma_msg};
 use jsonrpc_core::Result;
-use rand_core::SeedableRng;
-use rand_xorshift::XorShiftRng;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::create_dir_all;
@@ -18,7 +16,6 @@ use zkevm::utils::{load_kzg_params, load_or_create_seed};
 const PARAMS_DIR: &str = "./kzg_params/";
 const SEED_FILE: &str = "./rng_seed";
 const OUT_PROOF_DIR: &str = "./out_proof/";
-const VERIFIER_NAME: &str = "zk-verifier.sol";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ProofResult {
@@ -40,7 +37,6 @@ pub fn create_proof(trace: BlockTrace, proof_type: ProofType) -> Result<ProofRes
         .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load kzg agg params")));
     let seed = load_or_create_seed(SEED_FILE)
         .unwrap_or_else(|_| panic!("{}", kroma_msg("failed to load or create seed")));
-    let rng = XorShiftRng::from_seed(seed);
 
     // prepare directory to store proof. (i.e., ./out_proof/<block_number>/)
     let height_hex = trace.header.number.unwrap().to_string();
@@ -48,7 +44,7 @@ pub fn create_proof(trace: BlockTrace, proof_type: ProofType) -> Result<ProofRes
     let _ = create_dir_all(&out_dir);
 
     // build prover
-    let mut prover = Prover::from_params_and_rng(params, agg_params, rng);
+    let mut prover = Prover::from_params_and_seed(params, Some(agg_params), seed);
     // specify the dir to store the vk and proof of the intermediate circuit.
     prover.debug_dir = out_dir.to_str().unwrap().to_string();
 
@@ -100,14 +96,13 @@ pub fn create_agg_proof(mut prover: Prover, trace: BlockTrace) -> Result<ProofRe
     // generate proof
     let mut timer = Measurer::new();
     let proof = prover
-        .create_agg_circuit_proof(&trace)
+        .create_agg_circuit_proof(&trace, false)
         .unwrap_or_else(|_| panic!("{}", kroma_msg("cannot generate agg_proof")));
     timer.end(&kroma_msg("finish generating a proof"));
 
     // store proof and verifier contract as files
     let dir = PathBuf::from(prover.debug_dir.clone());
     write_agg_proof(&dir, &proof);
-    write_solidity(&prover, &proof, &dir, VERIFIER_NAME);
     kroma_info(format!("output files to {}", dir.to_str().unwrap()));
 
     let proof_result = ProofResult::new(proof.proof.clone(), Some(proof.final_pair));
@@ -125,17 +120,4 @@ pub fn write_agg_proof(dir: &Path, proof: &AggCircuitProof) {
     let _ = fs::create_dir_all(&proof_path);
 
     proof.write_to_dir(&mut proof_path);
-}
-
-pub fn write_solidity(
-    prover: &Prover,
-    proof: &AggCircuitProof,
-    dir: &PathBuf,
-    verifier_name: &str,
-) {
-    let sol = prover.create_solidity_verifier(proof);
-    let _ = fs::create_dir_all(dir);
-
-    let mut dir = dir.clone();
-    write_file(&mut dir, verifier_name, &Vec::<u8>::from(sol.as_bytes()));
 }
